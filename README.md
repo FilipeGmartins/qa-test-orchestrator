@@ -1,0 +1,62 @@
+# QA Test Orchestrator
+
+Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
+
+**Entrega atual: Suítes de Teste (v0.3.0), primeira parte da fase 3.** Projetos com cadastro, busca, edição e arquivamento; suítes vinculadas a projetos com tags, consulta, edição e ativação/inativação. Casos de teste, ambientes, execuções, métricas, artefatos e presets ainda não estão implementados. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
+
+## Executar com Docker
+
+Requisito: Docker Engine/Desktop com Compose v2 e suporte a containers Linux.
+
+Se a API de desenvolvimento estiver rodando na porta 5080, encerre-a antes de iniciar o Compose para evitar conflito de porta. O frontend Vite em 5173 pode permanecer aberto.
+
+```sh
+docker compose up --build
+```
+
+Abra http://localhost:8080. API: http://localhost:5080/api/system. OpenAPI: http://localhost:5080/openapi/v1.json. O Compose usa configuração **local**, porta restrita a loopback e senha de desenvolvimento. Opcionalmente copie `.env.example` para `.env` antes de criar o volume. Não publicar esta configuração na internet.
+
+Compose inicia PostgreSQL, executa o job `migrate` (InitialProjects) e só depois inicia a API. Se a migração falhar, verifique `docker compose logs migrate`. `docker compose down` encerra os serviços e preserva o banco; não use `-v` para preservar os projetos. Nesta máquina Docker já está instalado; os recursos Plataforma de Máquina Virtual e WSL foram habilitados e aguardam reinicialização do Windows. Containers e PostgreSQL real ainda precisam ser validados após o engine iniciar.
+
+## Desenvolvimento sem containers
+
+Requisitos: Node.js 24, SDK .NET 10 e PostgreSQL 17. O SDK é selecionado por `global.json`. Nesta máquina foi baixado um SDK em `.tools/dotnet`; ele não é versionado.
+
+Terminal 1 (PowerShell, raiz do repositório):
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+dotnet run --project backend/src/Api -- --migrate
+dotnet run --project backend/src/Api --urls http://127.0.0.1:5080
+```
+
+Se não houver SDK global, substitua `dotnet` por `& .\.tools\dotnet\dotnet.exe`. Para usar os pacotes locais restaurados nesta máquina, defina `$env:NUGET_PACKAGES = Join-Path $PWD '.cache\nuget'` e `$env:DOTNET_CLI_HOME = Join-Path $PWD '.cache\dotnet-home'`.
+
+Terminal 2:
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
+
+Abra http://localhost:5173/projects. O Vite encaminha `/api` e `/openapi` ao backend. Configure `ConnectionStrings__Database` para usar outro banco; os valores locais padrão estão em `appsettings.Development.json`. Sem PostgreSQL, a API continua acessível e a interface informa banco indisponível; cadastros não são gravados até o banco e a migração estarem prontos. Em ambiente diferente de Development, a connection string deve ser fornecida e OpenAPI não é exposto.
+
+## Validar
+
+```sh
+dotnet test backend/QaTestOrchestrator.slnx
+cd frontend
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+Os testes HTTP de Projetos usam SQLite relacional isolado; os testes de navegador usam respostas controladas. Eles não substituem PostgreSQL real. A suíte específica de PostgreSQL fica ignorada sem `QA_TEST_DATABASE`. O roteiro para executá-la está em [TESTING.md](docs/TESTING.md).
+
+Resultado local: **32 testes backend + 19 frontend + 5 navegador aprovados; 1 teste PostgreSQL pendente**. Builds aprovados. As migrações de Projetos e Suítes e o [SQL idempotente completo](docs/migrations/SchemaWithTestSuites.sql) estão incluídos na entrega. Acesse `/test-suites` ou o botão de suítes no detalhe de um projeto.
+
+## Próxima entrega
+
+Quando Docker estiver pronto, validar Compose e a suíte PostgreSQL. Próxima entrega de produto: Casos de Teste e Ambientes, completando o catálogo antes de iniciar execuções. Antes de começar, ler `docs/PRODUCT.md` e `docs/ARCHITECTURE.md`; após concluir, atualizar testes e changelog. Não antecipar as fases futuras.

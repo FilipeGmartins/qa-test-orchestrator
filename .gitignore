@@ -1,0 +1,14 @@
+node_modules/
+dist/
+bin/
+obj/
+.tools/
+.cache/
+.env
+*.user
+TestResults/
+coverage/
+*.tsbuildinfo
+test-results/
+playwright-report/
+.DS_Store
