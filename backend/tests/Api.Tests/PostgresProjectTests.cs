@@ -70,6 +70,14 @@ public sealed class PostgresProjectTests
             var suiteRead = await client.GetStringAsync($"/api/test-suites/{suiteId}");
             Assert.Contains("@smoke", suiteRead);
             Assert.Contains("Active", suiteRead);
+            var caseResponse = await client.PostAsJsonAsync($"/api/test-suites/{suiteId}/test-cases", new { stableKey = "login", name = "Login", tags = new[] { "@smoke" } });
+            Assert.Equal(HttpStatusCode.Created, caseResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync($"/api/test-suites/{suiteId}/test-cases", new { stableKey = "LOGIN", name = "Duplicate" })).StatusCode);
+            var environmentResponse = await client.PostAsJsonAsync($"/api/projects/{project.Id}/environments", new { name = "Staging", baseUrl = "https://example.com", enabled = true });
+            Assert.Equal(HttpStatusCode.Created, environmentResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync($"/api/projects/{project.Id}/environments", new { name = "Staging", baseUrl = "https://example.com" })).StatusCode);
+            Assert.Contains("login", await client.GetStringAsync($"/api/test-suites/{suiteId}/test-cases"));
+
             project = (await client.GetFromJsonAsync<ProjectDto>($"/api/projects/{project.Id}"))!;
             var path = $"/api/projects/{project.Id}";
             var edited = await client.PutAsJsonAsync(path, new { name = "Portal editado", project.Description, project.Version });

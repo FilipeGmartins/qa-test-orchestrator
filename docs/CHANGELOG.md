@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-15 — 0.4.0 — Casos, Ambientes e Roadmap
+- Repositório privado criado no GitHub, código versionado e dez issues organizadas em quadro Kanban.
+- Cadastro/edição de casos por suíte, chave permanente única, revisão, tags, status, busca e paginação.
+- Ambientes por projeto com URL HTTP(S) validada, unicidade por tipo e Production desabilitado.
+- Concorrência e bloqueio de escrita em projetos arquivados; migração AddCasesAndEnvironments e SQL completo.
+- 42 testes backend, 25 frontend e 6 de navegador aprovados (73); PostgreSQL real permanece pendente.
+- Docker/PostgreSQL mantido como última etapa por decisão do usuário. Próxima entrega: configuração, estados e histórico de Execuções.
+
 ## 2026-09-14 — 0.3.0 — Suítes de Teste
 - Retomado desenvolvimento do produto; configuração do Windows deixada em pausa após habilitação dos pré-requisitos.
 - Cadastro, listagem por projeto, busca/paginação, consulta, edição e ativação/inativação de suítes. Tags validadas, normalizadas e deduplicadas; status enum; nomes/descrições limitados.

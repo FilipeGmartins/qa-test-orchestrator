@@ -26,6 +26,8 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
                 ValidationException validation => (400, "INVALID_CONFIGURATION", validation.Message, validation.Field),
                 BadHttpRequestException => (400, "INVALID_REQUEST", "Verifique o formato dos dados enviados.", (string?)null),
                 ResourceNotFoundException => (404, "PROJECT_NOT_FOUND", exception.Message, null),
+                CatalogNotFoundException => (404, "CATALOG_NOT_FOUND", exception.Message, null),
+                CatalogConflictException => (409, "CONCURRENT_UPDATE", exception.Message, null),
                 SuiteNotFoundException => (404, "TEST_SUITE_NOT_FOUND", exception.Message, null),
                 SuiteConflictException => (409, "CONCURRENT_UPDATE", exception.Message, null),
                 ProjectArchivedException => (409, "PROJECT_ARCHIVED", exception.Message, null),

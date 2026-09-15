@@ -44,3 +44,7 @@ Projetos/suítes: testes de validação e persistência real PostgreSQL. Execuç
 7 testes xUnit, 6 testes Vitest e 2 testes Playwright aprovados. Build frontend e backend aprovados. UI verificada visualmente em desktop/móvel contra a API real sem banco. Compose e PostgreSQL real não executados por ausência de Docker. Consulte os detalhes no CHANGELOG. Não considerar Compose validado apenas por inspeção dos arquivos.
 
 Nesta máquina os navegadores foram instalados em `.cache/ms-playwright`. Antes de rodar os testes a partir de `frontend` no PowerShell, use `$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path (Split-Path $PWD) '.cache\ms-playwright'`; em outra máquina, `npx playwright install chromium` instala no cache padrão. SDK e pacotes locais do backend: ver instruções no README.
+
+
+## Catálogo — 0.4.0
+42 testes backend aprovados, 25 frontend e 6 Playwright (73 locais). Cobertura: URLs inválidas e credenciais, bloqueio Production, chave estável/normalização/duplicidade, revisão, filtros/paginação, isolamento por projeto/suíte, versão antiga, arquivamento e rollback concorrente. Interface: validação antes de enviar, preservação em erro, formulário Production bloqueado; navegador percorre criar/editar/inativar caso e configurar Staging. Testes de interface usam API controlada; não comprovam integração de banco. Teste PostgreSQL ampliado para casos/ambientes e todas as migrações, ignorado enquanto QA_TEST_DATABASE não for informado. Validação real ficará na etapa final #10.

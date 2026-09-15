@@ -33,3 +33,15 @@ Erros seguem `{ error, message, traceId, field? }`: 400 INVALID_CONFIGURATION (c
 SuiteDto: id, projectId, name, description, tags, status, createdAt, updatedAt, version. Status JSON numérico é rejeitado. Nome trim 1–120, descrição até 2000, no máximo 20 tags; tags são normalizadas para minúsculas, deduplicadas e devem corresponder a `^@[a-z0-9][a-z0-9_-]{0,39}$`.
 
 Projeto ausente → 404; projeto arquivado → 409 PROJECT_ARCHIVED nas gravações; edição concorrente da suíte/projeto → 409 CONCURRENT_UPDATE. Gravações de suíte também alteram a versão do projeto; refaça GET antes de editar/arquivar o projeto. Não há exclusão física. Casos de teste e ambientes ainda não têm endpoints.
+
+
+## Casos e Ambientes — v0.4.0
+- `GET /api/test-suites/{suiteId}/test-cases?search=&status=all&page=1&pageSize=20`: `{items,total,page,pageSize}`; filtros all/active/inactive, página 1–100000, tamanho 1–100.
+- `POST /api/test-suites/{suiteId}/test-cases`: `{stableKey,name,description,tags,status}`; 201 com Location do caso. Status padrão Active.
+- `GET /api/test-cases/{id}`: consulta, incluindo chave/revisão e versão.
+- `PUT /api/test-cases/{id}`: `{name,description,tags,status,version}`; chave e suíte não são editáveis. Status e versão obrigatórios.
+- `GET /api/projects/{projectId}/environments`: array de ambientes (até três).
+- `POST /api/projects/{projectId}/environments`: `{name,baseUrl,enabled}`; tipo obrigatório Development/Staging/Production, enabled padrão false. 201 com Location da coleção.
+- `PUT /api/environments/{id}`: `{baseUrl,enabled,version}`; tipo e projeto imutáveis.
+
+URLs HTTP(S) sem credenciais, parâmetros ou fragmentos. Production habilitado retorna 400. Catálogo não executa chamadas para URLs. Casos retornam `catalogVersion` incremental e `version` UUID para concorrência. Ambientes retornam `version` UUID. Projeto arquivado retorna 409. Chave/tipo repetido ou versão antiga retorna 409 CONCURRENT_UPDATE. Item inexistente retorna 404 CATALOG_NOT_FOUND; projeto/suíte inexistente mantém os códigos específicos. Status/tipos numéricos rejeitados.

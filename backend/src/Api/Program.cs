@@ -19,6 +19,8 @@ builder.Services.AddScoped<IProjectStore, ProjectStore>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<ITestSuiteStore, TestSuiteStore>();
 builder.Services.AddScoped<TestSuiteService>();
+builder.Services.AddScoped<ICatalogStore, CatalogStore>();
+builder.Services.AddScoped<CatalogService>();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(
     new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)));
 
@@ -33,6 +35,7 @@ if (migrateOnly)
 app.UseMiddleware<ExceptionMiddleware>();
 app.MapProjectEndpoints();
 app.MapTestSuiteEndpoints();
+app.MapCatalogEndpoints();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/api/system", (GetSystemStatus query, CancellationToken ct) => query.ExecuteAsync(ct))

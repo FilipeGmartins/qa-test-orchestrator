@@ -46,7 +46,7 @@ TestSuite contém enum Active/Inactive, tags normalizadas, timestamps e token de
 
 FK TestSuites.ProjectId → Projects.Id usa Restrict; não há DELETE. Tags são coleção serializada como JSON em coluna text, com ValueComparer para tracking; isso evita dependência de arrays específicos do PostgreSQL nesta fase. Busca atual é por nome; índice (ProjectId, CreatedAt, Id). Migração AddTestSuites e SQL idempotente completo SchemaWithTestSuites.sql. Readiness consulta ambas as tabelas e verifica migrações pendentes.
 
-Frontend possui seleção paginada de projetos, listagem de suítes e formulário de consulta/edição/criação; projetos arquivados tornam o formulário somente leitura. HTTP compartilhado fica em api/http.ts. Status JSON são nomes de enum; valores numéricos ou desconhecidos são rejeitados. Casos e ambientes serão implementados separadamente.
+Frontend possui seleção paginada de projetos, listagem de suítes e formulário de consulta/edição/criação; projetos arquivados tornam o formulário somente leitura. HTTP compartilhado fica em api/http.ts. Status JSON são nomes de enum; valores numéricos ou desconhecidos são rejeitados. Casos e ambientes foram adicionados na versão 0.4.0.
 
 ## Execução: desenho para fases futuras
 Cliente → DTO validado → caso de uso → TestRun persistido como Queued → worker reclama job atomicamente → ITestRunner.RunAsync(configuração, CancellationToken) → PlaywrightTestRunner envia JSON a um processo fixo → eventos/resultados persistidos → polling na UI. Snapshot inclui URL autorizada, parâmetros e versão do catálogo. Nenhum argumento de shell é construído a partir do cliente. Usar executable fixo e ArgumentList ou protocolo JSON; catálogo mapeia IDs de casos para testes conhecidos.
@@ -74,3 +74,11 @@ Estados: Pending → Queued → Running → Passed/Failed/Error; Pending/Queued/
 - [Concorrência otimista no EF Core](https://learn.microsoft.com/en-us/ef/core/saving/concurrency)
 - [Aplicação de migrações](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying)
 - [Limitações dos substitutos de banco em testes](https://learn.microsoft.com/en-us/ef/core/testing/choosing-a-testing-strategy)
+
+
+## Casos e ambientes
+CatalogService/ICatalogStore mantêm as operações do catálogo fora dos endpoints. CatalogMetadata compartilha validação de nome, descrição e tags entre suítes e casos. TestCase preserva StableKey/TestSuiteId; cada edição incrementa CatalogVersion e renova Version. ProjectEnvironment preserva ProjectId/Name. Ambos usam token de concorrência EF e atualizam a versão do projeto na mesma transação. Assim, arquivamento concorrente reverte toda escrita. Índices únicos protegem chaves/tipos inclusive em concorrência; PostgreSQL unique violation é traduzida em 409.
+
+Frontend em features/catalog, com listagem paginada de casos e formulários locais. Campos são preservados em erro; cancelar/recarregar descarta a edição e busca versões atuais. Cache de catálogo e projetos é invalidado ao salvar. A API valida URLs mas não as acessa. Sem execução ou atribuição automática de testes executáveis.
+
+Migração AddCasesAndEnvironments e SQL SchemaWithCatalog.sql. Readiness exige todas as quatro tabelas e nenhuma migração pendente. Validação Docker/PostgreSQL adiada para o fim por decisão do usuário.

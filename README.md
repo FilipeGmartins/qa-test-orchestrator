@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Suítes de Teste (v0.3.0), primeira parte da fase 3.** Projetos com cadastro, busca, edição e arquivamento; suítes vinculadas a projetos com tags, consulta, edição e ativação/inativação. Casos de teste, ambientes, execuções, métricas, artefatos e presets ainda não estão implementados. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
+**Entrega atual: Catálogo de Testes (v0.4.0), fase 3.** Projetos, suítes, casos de teste e ambientes com cadastro, edição e consulta. Casos possuem chave permanente, tags e ativação/inativação. Execuções, métricas, artefatos e presets ainda não estão implementados. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
 
 ## Executar com Docker
 
@@ -60,3 +60,14 @@ Resultado local: **32 testes backend + 19 frontend + 5 navegador aprovados; 1 te
 ## Próxima entrega
 
 Quando Docker estiver pronto, validar Compose e a suíte PostgreSQL. Próxima entrega de produto: Casos de Teste e Ambientes, completando o catálogo antes de iniciar execuções. Antes de começar, ler `docs/PRODUCT.md` e `docs/ARCHITECTURE.md`; após concluir, atualizar testes e changelog. Não antecipar as fases futuras.
+
+
+## Acompanhamento no GitHub
+- [Repositório privado](https://github.com/FilipeGmartins/qa-test-orchestrator)
+- [Roadmap Kanban](https://github.com/users/FilipeGmartins/projects/1)
+- [Etapas e critérios de aceite](https://github.com/FilipeGmartins/qa-test-orchestrator/issues)
+
+### Catálogo — v0.4.0
+Abra um projeto → **Ambientes** para configurar Development, Staging e Production. Abra uma suíte → **Ver casos de teste** para cadastrar e editar casos. Chaves permanentes são únicas por suíte; casos podem ser inativados. Production permanece desabilitado. Esta entrega cadastra metadados: a ligação com código Playwright entra na etapa do runner.
+
+Por decisão do usuário, a integração Docker/PostgreSQL e o aceite de infraestrutura ficam para a última etapa (#10). As funcionalidades são verificadas com testes locais sem substituir PostgreSQL como banco da aplicação. A migração mais recente é AddCasesAndEnvironments; SQL completo em `docs/migrations/SchemaWithCatalog.sql`.

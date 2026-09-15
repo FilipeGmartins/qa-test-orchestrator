@@ -12,6 +12,8 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
 {
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<TestSuite> TestSuites => Set<TestSuite>();
+    public DbSet<TestCase> TestCases => Set<TestCase>();
+    public DbSet<ProjectEnvironment> ProjectEnvironments => Set<ProjectEnvironment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +41,32 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
                 tags => tags.ToArray()));
         suite.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
         suite.HasIndex(x => new { x.ProjectId, x.CreatedAt, x.Id });
+        var test = modelBuilder.Entity<TestCase>();
+        test.ToTable("TestCases");
+        test.HasKey(x => x.Id);
+        test.Property(x => x.StableKey).HasMaxLength(80).IsRequired();
+        test.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        test.Property(x => x.Description).HasMaxLength(2000).IsRequired();
+        test.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+        test.Property(x => x.Version).IsConcurrencyToken();
+        test.Property(x => x.Tags).HasConversion(
+            tags => JsonSerializer.Serialize(tags, (JsonSerializerOptions?)null),
+            json => JsonSerializer.Deserialize<string[]>(json, (JsonSerializerOptions?)null)!)
+            .Metadata.SetValueComparer(new ValueComparer<string[]>(
+                (left, right) => left!.SequenceEqual(right!),
+                tags => tags.Aggregate(0, (hash, tag) => HashCode.Combine(hash, tag.GetHashCode())),
+                tags => tags.ToArray()));
+        test.HasOne<TestSuite>().WithMany().HasForeignKey(x => x.TestSuiteId).OnDelete(DeleteBehavior.Restrict);
+        test.HasIndex(x => new { x.TestSuiteId, x.StableKey }).IsUnique();
+        test.HasIndex(x => new { x.TestSuiteId, x.CreatedAt, x.Id });
+        var environment = modelBuilder.Entity<ProjectEnvironment>();
+        environment.ToTable("ProjectEnvironments");
+        environment.HasKey(x => x.Id);
+        environment.Property(x => x.Name).HasConversion<string>().HasMaxLength(16);
+        environment.Property(x => x.BaseUrl).HasMaxLength(2048).IsRequired();
+        environment.Property(x => x.Version).IsConcurrencyToken();
+        environment.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
+        environment.HasIndex(x => new { x.ProjectId, x.Name }).IsUnique();
     }
 }
 
@@ -52,6 +80,8 @@ public sealed class PostgresDatabaseProbe(OrchestratorDbContext database) : IDat
             if ((await database.Database.GetPendingMigrationsAsync(cancellationToken)).Any()) return false;
             await database.Projects.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestSuites.AsNoTracking().AnyAsync(cancellationToken);
+            await database.TestCases.AsNoTracking().AnyAsync(cancellationToken);
+            await database.ProjectEnvironments.AsNoTracking().AnyAsync(cancellationToken);
             return true;
         }
         catch (NpgsqlException) { return false; }

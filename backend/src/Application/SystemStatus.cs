@@ -10,6 +10,6 @@ public sealed record SystemStatus(string Application, string Version, string Api
 public sealed class GetSystemStatus(IDatabaseProbe database)
 {
     public async Task<SystemStatus> ExecuteAsync(CancellationToken cancellationToken) =>
-        new("QA Test Orchestrator", "0.3.0", "available",
+        new("QA Test Orchestrator", "0.4.0", "available",
             await database.IsAvailableAsync(cancellationToken) ? "available" : "unavailable");
 }

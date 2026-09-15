@@ -22,7 +22,7 @@ Aceite funcional validado com testes locais. Aceite PostgreSQL/Compose depende d
 ### Terceira entrega — Suítes (parte 1 do catálogo)
 Cadastro, consulta, edição, ativação/inativação e listagem paginada de suítes por projeto. Nome de 1–120 caracteres, descrição opcional até 2000, até 20 tags com padrão @ seguido de 1–40 letras ASCII/números/hífen/sublinhado. Tags normalizadas para minúsculas e deduplicadas. Não há exclusão física ou transferência de suíte para outro projeto. Projetos arquivados permitem consulta, mas não alteração do catálogo.
 
-Casos de teste, ambientes e integração com catálogo executável continuam pendentes, para não antecipar funcionalidades. A próxima entrega completa essa parte do catálogo antes de iniciar execuções.
+Casos e ambientes implementados na entrega 0.4.0 descrita abaixo. A ligação com código executável continua reservada à etapa do runner.
 
 ### P0 — Caminho essencial, em ordem de dependência
 1. Fundação: repositório, documentação, frontend/API, banco, Compose e testes básicos.
@@ -42,7 +42,15 @@ Casos de teste, ambientes e integração com catálogo executável continuam pen
 Múltiplos frameworks, execução distribuída/elástica, edição/upload arbitrário de código, clonagem de repositórios informados pela UI, agendamento recorrente, multi-tenancy, notificações, análise por IA, comparações avançadas de flakiness e armazenamento remoto de artefatos. Não antecipar essas implementações.
 
 ## Roadmap e situação
-As dez fases do briefing são mantidas: Fundação → Projetos → Suítes → Execuções → Playwright → Dashboard → Artefatos → Presets → Autenticação → CI/CD. A entrega utilizável do MVP exige artefatos e controle mínimo de acesso; a ordem de liberação os antecipa em relação ao dashboard e aos presets. Fundação, Projetos e cadastro de Suítes implementados; próximos itens: Casos de Teste e Ambientes. Aceite de infraestrutura depende de iniciar o engine Docker após reiniciar o Windows e executar Compose/PostgreSQL.
+As dez fases do briefing são mantidas: Fundação → Projetos → Suítes → Execuções → Playwright → Dashboard → Artefatos → Presets → Autenticação → CI/CD. A entrega utilizável do MVP exige artefatos e controle mínimo de acesso; a ordem de liberação os antecipa em relação ao dashboard e aos presets. Fundação, Projetos e cadastro de Suítes implementados; Casos de Teste e Ambientes implementados; próximo item: Execuções. Aceite de infraestrutura depende de iniciar o engine Docker após reiniciar o Windows e executar Compose/PostgreSQL.
 
 ## Critérios do produto
 Nenhum comando shell vindo do cliente. Nenhuma execução simulada apresentada como real. Estado terminal consistente, falha de infraestrutura separada de falha de teste, mensagens úteis sem segredos e acessibilidade por teclado. Os testes de criação, resultado, filtros, status e cálculo de sucesso serão acrescentados junto às respectivas features.
+
+
+## Quarta entrega — Casos e Ambientes (0.4.0)
+Casos vinculados a uma suíte, com nome, descrição, tags, status Active/Inactive, chave permanente e revisão incremental. Chave normalizada para minúsculas, 1–80 caracteres ASCII alfanuméricos/hífen/sublinhado, única por suíte e imutável após criar. Busca por nome/chave, filtro de status e paginação. Não aceita código ou caminho executável. Suíte inativa permite manutenção do catálogo; execuções futuras deverão bloquear suítes inativas. Projeto arquivado bloqueia toda escrita, preservando consulta.
+
+Ambientes únicos por projeto e tipo (Development/Staging/Production), URL base HTTP(S) de até 2048 caracteres sem credenciais, query ou fragmento. Desabilitados por padrão; Production não pode ser habilitado nesta fase. Nenhuma requisição é feita para a URL cadastrada. Cadastro local não equivale a autorização de egress: controles do runner e autorização administrativa seguem pendentes.
+
+[Roadmap no GitHub](https://github.com/users/FilipeGmartins/projects/1). Docker/PostgreSQL fica explicitamente por último (#10), conforme decisão do usuário. Aceite local desta entrega não representa validação PostgreSQL.
