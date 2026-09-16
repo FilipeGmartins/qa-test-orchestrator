@@ -3,8 +3,9 @@ using QaTestOrchestrator.Api;
 using QaTestOrchestrator.Application;
 using QaTestOrchestrator.Infrastructure;
 
+var workerOnly = args.Contains("--worker");
 var migrateOnly = args.Contains("--migrate");
-var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate").ToArray());
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate" && arg != "--worker").ToArray());
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
 builder.Services.AddOpenApi();
@@ -23,6 +24,19 @@ builder.Services.AddScoped<ICatalogStore, CatalogStore>();
 builder.Services.AddScoped<CatalogService>();
 builder.Services.AddScoped<ITestRunStore, TestRunStore>();
 builder.Services.AddScoped<TestRunService>();
+var runnerSettings = new RunnerSettings {
+    Enabled = builder.Configuration.GetValue<bool>("Runner:Enabled"),
+    Root = Path.GetFullPath(builder.Configuration["Runner:Root"] ?? "../../../automation", builder.Environment.ContentRootPath),
+    Node = builder.Configuration["Runner:Node"] ?? "node",
+    ArtifactsRoot = Path.GetFullPath(builder.Configuration["Runner:ArtifactsRoot"] ?? "../../../.cache/run-artifacts", builder.Environment.ContentRootPath),
+    AllowedOrigins = builder.Configuration.GetSection("Runner:AllowedOrigins").Get<string[]>() ?? []
+};
+builder.Services.AddSingleton(runnerSettings);
+builder.Services.AddSingleton<IRunnerPolicy, RunnerPolicy>();
+builder.Services.AddSingleton<ITestRunner, PlaywrightTestRunner>();
+builder.Services.AddSingleton<RunWorker>();
+builder.Services.AddScoped<RunQueueService>();
+
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(
     new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)));
 
@@ -32,6 +46,14 @@ if (migrateOnly)
 {
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider.GetRequiredService<OrchestratorDbContext>().Database.MigrateAsync();
+    return;
+}
+if (workerOnly)
+{
+    if (!runnerSettings.Enabled) throw new InvalidOperationException("Runner:Enabled must be true to start the worker.");
+    using var stopping = new CancellationTokenSource();
+    Console.CancelKeyPress += (_, e) => { e.Cancel = true; stopping.Cancel(); };
+    await app.Services.GetRequiredService<RunWorker>().RunAsync(stopping.Token);
     return;
 }
 app.UseMiddleware<ExceptionMiddleware>();

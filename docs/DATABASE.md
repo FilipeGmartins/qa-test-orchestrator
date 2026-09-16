@@ -35,3 +35,9 @@ Na versão 0.4.0, use `docs/migrations/SchemaWithCatalog.sql` para todas as migr
 Id UUID PK; ProjectId, TestSuiteId e EnvironmentId FKs Restrict; ConfigurationSnapshot text JSON versionado; Status varchar(16); Version UUID token concorrência; CreatedAt UTC obrigatório, StartedAt/FinishedAt UTC nullable. Índices (ProjectId, CreatedAt, Id), (Status, CreatedAt, Id) e índices das FKs. Vínculos do mesmo projeto são validados na Application. Casos são copiados no snapshot com chave/versão; não há exclusão física do catálogo. A descrição anterior de contadores/worker é desenho futuro: esses campos não foram criados sem resultados reais.
 
 Migração AddTestRuns e script completo `docs/migrations/SchemaWithTestRuns.sql`. Não aplicar Down em dados que devem ser preservados. PostgreSQL real será validado na etapa final.
+
+
+## Runner — migração AddRunnerLeases
+TestRuns recebe LeaseId UUID nullable, LeaseExpiresAt UTC nullable, CancellationRequested boolean false, ProgressJson text (backfill `[]` para registros anteriores), ResultJson text nullable e RunnerError varchar(1000) nullable. Índice (Status, LeaseExpiresAt). Version UUID já existente também controla claims, heartbeats, progresso e conclusão. Resultados por tentativa em JSON nesta fase; normalização por execução/artefato será adicionada com a próxima entrega.
+
+SQL completo: `docs/migrations/SchemaWithRunner.sql`. Não aplicar Down para preservar progresso. Lease expirado não cria nova execução e não repete efeitos.

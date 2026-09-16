@@ -32,6 +32,25 @@ public sealed class TestRun
     public DateTime CreatedAt { get; private set; }
     public DateTime? StartedAt { get; private set; }
     public DateTime? FinishedAt { get; private set; }
+    public Guid? LeaseId { get; private set; }
+    public DateTime? LeaseExpiresAt { get; private set; }
+    public bool CancellationRequested { get; private set; }
+    public string ProgressJson { get; private set; } = "[]";
+    public string? ResultJson { get; private set; }
+    public string? RunnerError { get; private set; }
+    public void Claim(Guid leaseId, DateTime now) { Start(now); LeaseId = leaseId; LeaseExpiresAt = now.AddSeconds(30); }
+    public void Heartbeat(DateTime now) { if (Status != RunStatus.Running) throw new RunStateException(); LeaseExpiresAt = now.AddSeconds(30); Version = Guid.NewGuid(); }
+    public void RequestCancellation(DateTime now)
+    {
+        if (Status == RunStatus.Running) { CancellationRequested = true; Version = Guid.NewGuid(); }
+        else Cancel(now);
+    }
+    public void RecordProgress(string json) { if (Status != RunStatus.Running) throw new RunStateException(); ProgressJson = json; Version = Guid.NewGuid(); }
+    public void Finish(string? result, string? error, RunStatus status, DateTime now)
+    {
+        if (CancellationRequested) Cancel(now); else Complete(status, now);
+        ResultJson = result; RunnerError = error; LeaseExpiresAt = null;
+    }
     private TestRun() { }
     public static TestRun Create(Guid projectId, Guid suiteId, Guid environmentId, string snapshot, DateTime now) => new()
     {

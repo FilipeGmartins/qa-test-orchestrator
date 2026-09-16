@@ -14,8 +14,10 @@ export interface RunConfiguration {
   cases: { id: string; stableKey: string; name: string; catalogVersion: number; tags: string[] }[];
   tags: string[]; options: RunOptions;
 }
-export interface TestRun { id: string; projectId: string; status: RunStatus; version: string; createdAt: string; startedAt: string | null; finishedAt: string | null; configuration: RunConfiguration; runnerAvailable: boolean }
+export interface TestRun { id: string; projectId: string; status: RunStatus; version: string; createdAt: string; startedAt: string | null; finishedAt: string | null; configuration: RunConfiguration; runnerAvailable: boolean; cancellationRequested?: boolean; runnerError?: string; progress?: { kind: string; key?: string; browser?: string; attempt?: number; status?: string }[]; result?: { passed: number; failed: number; skipped: number; total: number } }
 export const runApi = {
+  capabilities: (signal?: AbortSignal) => apiRequest<{ enabled: boolean; catalog: { key: string; name: string; types: string[] }[] }>(`/runner`, { signal }),
+  enqueue: (run: TestRun) => apiRequest<TestRun>(`/test-runs/${run.id}/enqueue`, { method: 'POST', body: JSON.stringify({ version: run.version }) }),
   list: (projectId: string, status: string, page: number, signal?: AbortSignal) => apiRequest<{ items: TestRun[]; total: number }>(`/test-runs?${new URLSearchParams({ ...(projectId ? { projectId } : {}), status, page: String(page), pageSize: '12' })}`, { signal }),
   get: (id: string, signal?: AbortSignal) => apiRequest<TestRun>(`/test-runs/${encodeURIComponent(id)}`, { signal }),
   create: (projectId: string, input: RunInput) => apiRequest<TestRun>(`/projects/${projectId}/test-runs`, { method: 'POST', body: JSON.stringify(input) }),

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-16 — 0.6.0 — Runner Playwright real
+- Worker separado e fila persistente com claim otimista, lease/heartbeat, recuperação sem replay automático e cancelamento de árvore de processos.
+- Catálogo fixo page-title/http-ok, origens aprovadas e revalidação antes de enqueue; runner desabilitado por padrão, Production bloqueado.
+- Adapter .NET → JSON stdin → Node → Playwright CLI real, workers/retries/browsers/timeout global e políticas de captura.
+- Progresso real, tentativas, resumo final e confirmação de execução na interface; detalhes/downloads de evidências ainda pendentes.
+- Migração AddRunnerLeases e SQL completo; backfill ProgressJson=[] preserva leitura de execuções anteriores.
+- 60 testes backend (incluindo integração real), 36 frontend, 7 E2E da interface e 1 suíte Node com cinco cenários reais/capturas: 104 testes locais aprovados. PostgreSQL real permanece pendente para etapa final.
+
 ## 2026-09-16 — 0.5.0 — Configuração e Histórico de Execuções
 - Assistente de cinco etapas: suíte, casos/tags, ambiente, opções e revisão.
 - Configuração salva como Pending, com snapshot imutável do catálogo e parâmetros validados.

@@ -171,7 +171,7 @@ public sealed class ProjectTests
     }
 }
 
-internal sealed class ProjectTestHost : WebApplicationFactory<Program>
+internal sealed class ProjectTestHost(Action<IServiceCollection>? configure = null) : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection connection = new("Data Source=:memory:");
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -184,6 +184,7 @@ internal sealed class ProjectTestHost : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<OrchestratorDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<OrchestratorDbContext>>();
             services.AddDbContext<OrchestratorDbContext>(options => options.UseSqlite(connection));
+            configure?.Invoke(services);
         });
     }
 

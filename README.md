@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Configuração e Histórico de Execuções (v0.5.0), fase 4.** Projetos, suítes, casos de teste e ambientes com cadastro, edição e consulta. Casos possuem chave permanente, tags e ativação/inativação. Configurações de execução podem ser salvas como pendentes, consultadas e canceladas. O processamento Playwright, métricas, artefatos e presets ainda não estão implementados. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
+**Entrega atual: Runner Playwright (v0.6.0), fase 5.** Projetos, suítes, casos de teste e ambientes com cadastro, edição e consulta. Casos possuem chave permanente, tags e ativação/inativação. Configurações de execução podem ser salvas como pendentes, consultadas e canceladas. O runner processa testes implementados no catálogo do servidor. Dashboard, visualização/download de evidências, autenticação e presets permanecem pendentes. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
 
 ## Executar com Docker
 
@@ -77,3 +77,7 @@ Por decisão do usuário, a integração Docker/PostgreSQL e o aceite de infraes
 Abra um projeto → **Histórico de execuções** → **Nova execução**. O assistente possui cinco etapas: suíte, casos/tags, ambiente, opções e revisão. A confirmação salva uma solicitação **Pendente** com configuração imutável; não dispara testes. Consulte o histórico geral pela navegação **Execuções** ou o histórico de um projeto, filtre por estado e abra os detalhes para cancelar.
 
 O runner será implementado na próxima entrega (#4); não existe worker nem enfileiramento público nesta versão. Solicitações pendentes não devem ser disparadas automaticamente na futura ativação do runner: será necessária ação explícita e revalidação. Nova migração: AddTestRuns; SQL completo `docs/migrations/SchemaWithTestRuns.sql`. Docker/PostgreSQL permanece para a etapa final.
+
+
+### Runner — v0.6.0
+Runner real implementado, com fila persistente, lease/heartbeat, progresso, retries, timeout global e cancelamento do processo. Consulte [configuração e catálogo executável](automation/README.md). Está desabilitado por padrão; deve ser habilitado explicitamente no servidor, com origens aprovadas e worker separado. A aplicação não transforma metadados em código de teste. Testes reais do adapter foram executados com Chromium e servidor local; PostgreSQL/Docker real permanece reservado para a etapa final.

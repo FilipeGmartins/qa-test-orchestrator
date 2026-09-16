@@ -10,6 +10,8 @@ public static class TestRunEndpoints
             var run = await service.CreateAsync(projectId, request, ct);
             return Results.Created($"/api/test-runs/{run.Id}", run);
         }).WithTags("Test Runs");
+        app.MapGet("/api/runner", (IRunnerPolicy policy) => new { enabled = policy.Enabled, catalog = policy.Catalog }).WithTags("Runner");
+        app.MapPost("/api/test-runs/{id:guid}/enqueue", (Guid id, RunCancelRequest request, RunQueueService service, CancellationToken ct) => service.EnqueueAsync(id, request, ct)).WithTags("Runner");
         var group = app.MapGroup("/api/test-runs").WithTags("Test Runs");
         group.MapGet("/", (TestRunService service, CancellationToken ct, Guid? projectId = null, string? status = null, int page = 1, int pageSize = 20) => service.ListAsync(projectId, status, page, pageSize, ct));
         group.MapGet("/{id:guid}", (Guid id, TestRunService service, CancellationToken ct) => service.GetAsync(id, ct));

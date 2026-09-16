@@ -38,3 +38,14 @@ it('estado terminal não oferece cancelamento', async () => {
   expect(await screen.findByText('Cancelada')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Cancelar execução' })).not.toBeInTheDocument();
 });
+
+it('exige confirmação para enfileirar e mostra progresso real', async () => {
+  vi.spyOn(runApi, 'get').mockResolvedValue({ ...run, runnerAvailable: true });
+  const enqueue = vi.spyOn(runApi, 'enqueue').mockResolvedValue({ ...run, status: 'Passed', runnerAvailable: true, progress: [{ kind: 'attempt', key: 'page-title', browser: 'Chromium', attempt: 0, status: 'passed' }], result: { passed: 1, failed: 0, skipped: 0, total: 1 } });
+  mount('/test-runs/r1');
+  await userEvent.click(await screen.findByRole('button', { name: 'Executar agora' }));
+  expect(enqueue).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole('button', { name: 'Confirmar execução' }));
+  expect(await screen.findByText('Progresso real')).toBeInTheDocument();
+  expect(screen.getByText('1 aprovados · 0 falhos · 0 ignorados · 1 testes')).toBeInTheDocument();
+});

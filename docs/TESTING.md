@@ -52,3 +52,9 @@ Nesta máquina os navegadores foram instalados em `.cache/ms-playwright`. Antes 
 
 ## Execuções — 0.5.0
 54 testes backend, 35 frontend e 7 testes Playwright aprovados (96 locais). Novos cenários: limites, vínculos entre projetos, suíte/ambiente ativos, seleção de casos, tags, snapshot preservado após editar catálogo, estados terminais, cancelamento idempotente, concorrência na criação e cancelamento/conclusão. Navegador: assistente de cinco etapas, revisão, Pending, cancelamento e filtro do histórico. Teste PostgreSQL ampliado para criação/consulta/cancelamento, ainda ignorado sem QA_TEST_DATABASE. Testes de frontend usam API controlada, sem comprovar execução Playwright real.
+
+
+## Runner — 0.6.0
+60 testes backend aprovados com QA_RUNNER_INTEGRATION=1 (um teste PostgreSQL continua ignorado), 36 frontend, 7 E2E e 1 suíte Node: 104 verificações automatizadas locais. A suíte Node realiza sucesso real com Chromium, falha/retry, timeout, chave rejeitada, origem negada e confirma arquivos PNG/WebM/ZIP. Integração .NET cobre API, enqueue, fila SQLite, processo Node/browser, progresso/resultados persistidos e interrupção do adapter. Testes adicionais verificam reivindicação concorrente, cancelamento em execução, idempotência e recuperação de lease expirado sem replay.
+
+Comando a partir da raiz: `node --test automation/runner.test.mjs`. Para teste .NET real, configure QA_RUNNER_INTEGRATION=1 e PLAYWRIGHT_BROWSERS_PATH antes de `dotnet test backend/QaTestOrchestrator.slnx`. Sem a variável, teste real é ignorado (requer Node/Chromium instalados). Testes padrão não iniciam worker de produção. E2E da interface usa API controlada; integração real usa Chromium e SQLite isolado, não valida PostgreSQL/Compose. Firefox/WebKit/Headed dependem dos browsers/display do host e não foram executados nesta validação. Documentação de operação em automation/README.md.

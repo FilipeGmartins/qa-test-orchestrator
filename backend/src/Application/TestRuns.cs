@@ -11,10 +11,11 @@ public sealed record RunCaseSnapshot(Guid Id, string StableKey, string Name, int
 public sealed record RunSnapshot(int SchemaVersion, string ProjectName, string SuiteName, Guid SuiteVersion,
     string EnvironmentName, string BaseUrl, Guid EnvironmentVersion, RunCaseSnapshot[] Cases, string[] Tags, RunOptions Options);
 public sealed record RunDto(Guid Id, Guid ProjectId, Guid TestSuiteId, Guid EnvironmentId, RunStatus Status,
-    Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false)
+    Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false, bool CancellationRequested = false, JsonElement? Result = null, JsonElement? Progress = null, string? RunnerError = null)
 {
     public static RunDto From(TestRun run) => new(run.Id, run.ProjectId, run.TestSuiteId, run.EnvironmentId, run.Status,
-        run.Version, run.CreatedAt, run.StartedAt, run.FinishedAt, JsonSerializer.Deserialize<RunSnapshot>(run.ConfigurationSnapshot)!);
+        run.Version, run.CreatedAt, run.StartedAt, run.FinishedAt, JsonSerializer.Deserialize<RunSnapshot>(run.ConfigurationSnapshot)!, false, run.CancellationRequested,
+        run.ResultJson is null ? null : JsonSerializer.Deserialize<JsonElement>(run.ResultJson), JsonSerializer.Deserialize<JsonElement>(run.ProgressJson), run.RunnerError);
 }
 public sealed record RunPage(IReadOnlyList<RunDto> Items, int Total, int Page, int PageSize);
 public interface ITestRunStore
@@ -25,7 +26,7 @@ public interface ITestRunStore
     Task AddAsync(TestRun run, CancellationToken ct);
     Task SaveAsync(CancellationToken ct);
 }
-public sealed class TestRunService(ITestRunStore store, IProjectStore projects, ITestSuiteStore suites, ICatalogStore catalog, TimeProvider clock)
+public sealed class TestRunService(ITestRunStore store, IProjectStore projects, ITestSuiteStore suites, ICatalogStore catalog, TimeProvider clock, IRunnerPolicy policy)
 {
     public async Task<RunDto> CreateAsync(Guid projectId, RunRequest request, CancellationToken ct)
     {
@@ -53,17 +54,17 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
         project.RegisterCatalogChange(now);
         var run = TestRun.Create(projectId, suite.Id, environment.Id, JsonSerializer.Serialize(snapshot), now);
         await store.AddAsync(run, ct); await store.SaveAsync(ct);
-        return RunDto.From(run);
+        return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
     }
-    public async Task<RunDto> GetAsync(Guid id, CancellationToken ct) => RunDto.From(await Find(id, ct));
+    public async Task<RunDto> GetAsync(Guid id, CancellationToken ct) => RunDto.From(await Find(id, ct)) with { RunnerAvailable = policy.Enabled };
     public async Task<RunDto> CancelAsync(Guid id, RunCancelRequest request, CancellationToken ct)
     {
         var run = await Find(id, ct);
         if (request.Version == Guid.Empty) throw new ValidationException("Informe a versão atual.", "version");
-        if (run.Status == RunStatus.Cancelled) return RunDto.From(run);
+        if (run.Status == RunStatus.Cancelled) return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
         if (run.Version != request.Version) throw new RunConflictException();
-        run.Cancel(clock.GetUtcNow().UtcDateTime); await store.SaveAsync(ct);
-        return RunDto.From(run);
+        run.RequestCancellation(clock.GetUtcNow().UtcDateTime); await store.SaveAsync(ct);
+        return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
     }
     public async Task<RunPage> ListAsync(Guid? projectId, string? status, int page, int pageSize, CancellationToken ct)
     {
@@ -75,7 +76,8 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
             filter = Enum.Parse<RunStatus>(status);
         }
         if (projectId.HasValue && await projects.FindAsync(projectId.Value, ct) is null) throw new ResourceNotFoundException();
-        return await store.ListAsync(projectId, filter, page, pageSize, ct);
+        var result = await store.ListAsync(projectId, filter, page, pageSize, ct);
+        return result with { Items = result.Items.Select(x => x with { RunnerAvailable = policy.Enabled }).ToArray() };
     }
     private async Task<TestRun> Find(Guid id, CancellationToken ct) => await store.FindAsync(id, ct) ?? throw new RunNotFoundException();
 }

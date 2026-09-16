@@ -72,6 +72,8 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
         var run = modelBuilder.Entity<TestRun>();
         run.ToTable("TestRuns");
         run.HasKey(x => x.Id);
+        run.Property(x => x.RunnerError).HasMaxLength(1000);
+        run.HasIndex(x => new { x.Status, x.LeaseExpiresAt });
         run.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
         run.Property(x => x.Version).IsConcurrencyToken();
         run.Property(x => x.ConfigurationSnapshot).IsRequired();

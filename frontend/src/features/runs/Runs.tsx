@@ -6,7 +6,7 @@ import { suiteApi, parseTags } from '../suites/api';
 import { catalogApi, type TestCase } from '../catalog/api';
 import { defaultOptions, runApi, statuses, statusLabels, validateOptions, type RunOptions, type RunConfiguration } from './api';
 
-const runnerNote = 'O runner Playwright ainda não está integrado. As configurações ficam pendentes e nenhum teste é executado nesta etapa.';
+const runnerNote = 'As configurações são salvas como pendentes. Execute explicitamente nos detalhes quando o runner estiver habilitado no servidor.';
 function ErrorNotice({ error }: { error: Error }) { return <p className="error-message" role="alert">{error.message}</p>; }
 function Pages({ page, total, change }: { page: number; total: number; change: (page: number) => void }) {
   return <div className="pagination"><button type="button" className="button" disabled={page === 1} onClick={() => change(page - 1)}>Anterior</button><span>Página {page}</span><button type="button" className="button" disabled={page * 12 >= total} onClick={() => change(page + 1)}>Próxima</button></div>;
@@ -36,14 +36,22 @@ export function RunHistory() {
 
 export function RunDetails() {
   const { id = '' } = useParams(); const client = useQueryClient(); const [confirm, setConfirm] = useState(false);
-  const query = useQuery({ queryKey: ['run', id], queryFn: ({ signal }) => runApi.get(id, signal) });
+  const query = useQuery({ queryKey: ['run', id], queryFn: ({ signal }) => runApi.get(id, signal), refetchInterval: query => ['Queued', 'Running'].includes(query.state.data?.status ?? '') ? 2000 : false });
+  const [enqueueConfirm, setEnqueueConfirm] = useState(false);
+  const enqueue = useMutation({ mutationFn: () => runApi.enqueue(query.data!), onSuccess: async run => { client.setQueryData(['run', id], run); await client.invalidateQueries({ queryKey: ['runs'] }); setEnqueueConfirm(false); } });
   const mutation = useMutation({ mutationFn: () => runApi.cancel(query.data!), onSuccess: async run => { client.setQueryData(['run', id], run); await client.invalidateQueries({ queryKey: ['runs'] }); setConfirm(false); } });
   if (query.isPending) return <p role="status">Carregando execução…</p>;
   if (query.isError) return <><ErrorNotice error={query.error} /><button className="button" onClick={() => void query.refetch()}>Tentar novamente</button></>;
   const run = query.data;
   return <><Link className="back-link" to={`/projects/${run.projectId}/test-runs`}>← Voltar ao histórico</Link><div className="page-title"><h1>Detalhes da execução</h1><p role="status">{statusLabels[run.status]}</p><p>Criada em {new Date(run.createdAt).toLocaleString('pt-BR')}</p>{run.finishedAt && <p>Encerrada em {new Date(run.finishedAt).toLocaleString('pt-BR')}</p>}</div>
-    {!run.runnerAvailable && <p className="status-message">{runnerNote}</p>}
-    {['Pending', 'Queued', 'Running'].includes(run.status) && <div className="form-actions">{confirm ? <><p>Confirmar o cancelamento desta solicitação?</p><button className="button danger" disabled={mutation.isPending} onClick={() => mutation.mutate()}>Confirmar cancelamento</button><button className="button" disabled={mutation.isPending} onClick={() => setConfirm(false)}>Voltar</button></> : <button className="button" onClick={() => setConfirm(true)}>Cancelar execução</button>}</div>}
+    {!run.runnerAvailable && <p className="status-message">Runner desabilitado no servidor. Nenhum teste é executado enquanto ele estiver desabilitado.</p>}
+    {run.status === 'Pending' && run.runnerAvailable && <div className="form-actions">{enqueueConfirm ? <><p>Executar os casos desta configuração no ambiente indicado? O catálogo será revalidado.</p><button className="button primary" disabled={enqueue.isPending} onClick={() => enqueue.mutate()}>Confirmar execução</button><button className="button" onClick={() => setEnqueueConfirm(false)}>Voltar</button></> : <button className="button primary" onClick={() => setEnqueueConfirm(true)}>Executar agora</button>}</div>}
+    {enqueue.isError && <><ErrorNotice error={enqueue.error} /><button className="button" onClick={() => { enqueue.reset(); void query.refetch(); }}>Recarregar execução</button></>}
+    {run.cancellationRequested && run.status === 'Running' && <p role="status">Cancelamento solicitado. Aguardando encerramento do processo.</p>}
+    {run.runnerError && <p className="error-message">{run.runnerError}</p>}
+    {run.progress && run.progress.length > 0 && <section className="project-form"><h2>Progresso real</h2><p>{run.progress.filter(x => x.kind === 'attempt').length} tentativas concluídas (inclui retries).</p><ul>{run.progress.filter(x => x.kind === 'attempt').slice(-10).map((x, i) => <li key={i}>{x.key} · {x.browser} · tentativa {(x.attempt ?? 0) + 1} · {x.status}</li>)}</ul></section>}
+    {run.result && <p className="status-message">{run.result.passed} aprovados · {run.result.failed} falhos · {run.result.skipped} ignorados · {run.result.total} testes</p>}
+    {!run.cancellationRequested && ['Pending', 'Queued', 'Running'].includes(run.status) && <div className="form-actions">{confirm ? <><p>Confirmar o cancelamento desta solicitação?</p><button className="button danger" disabled={mutation.isPending} onClick={() => mutation.mutate()}>Confirmar cancelamento</button><button className="button" disabled={mutation.isPending} onClick={() => setConfirm(false)}>Voltar</button></> : <button className="button" onClick={() => setConfirm(true)}>Cancelar execução</button>}</div>}
     {mutation.isError && <><ErrorNotice error={mutation.error} /><button className="button" onClick={() => { mutation.reset(); setConfirm(false); void query.refetch(); }}>Recarregar estado</button></>}
     <Snapshot configuration={run.configuration} />
   </>;
@@ -59,6 +67,7 @@ export function RunWizard() {
   const suites = useQuery({ queryKey: ['suites', projectId, 'wizard', suitePage], queryFn: ({ signal }) => suiteApi.list(projectId, '', 'active', suitePage, signal) });
   const cases = useQuery({ queryKey: ['cases', suiteId, 'wizard', casePage], queryFn: ({ signal }) => catalogApi.cases(suiteId, '', 'active', casePage, signal), enabled: !!suiteId });
   const environments = useQuery({ queryKey: ['environments', projectId], queryFn: ({ signal }) => catalogApi.environments(projectId, signal) });
+  const capabilities = useQuery({ queryKey: ['runner'], queryFn: ({ signal }) => runApi.capabilities(signal), retry: false });
   const environment = environments.data?.find(x => x.id === environmentId);
   const mutation = useMutation({ mutationFn: () => runApi.create(projectId, { testSuiteId: suiteId, environmentId, caseIds: selected.map(x => x.id), tags: parseTags(tags), options }), onSuccess: async run => { client.setQueryData(['run', run.id], run); await Promise.all([client.invalidateQueries({ queryKey: ['runs'] }), client.invalidateQueries({ queryKey: ['project', projectId] }), client.invalidateQueries({ queryKey: ['projects'] })]); navigate(`/test-runs/${run.id}`); } });
   function submit(event: FormEvent) {
@@ -73,6 +82,7 @@ export function RunWizard() {
   }
   const failures = [project.error, suites.error, cases.error, environments.error].filter(Boolean) as Error[];
   return <><Link className="back-link" to={`/projects/${projectId}`}>← Voltar ao projeto</Link><div className="page-title"><p className="eyebrow">NOVA EXECUÇÃO</p><h1>Configurar execução</h1><p>{project.data?.name}</p></div><p className="status-message">{runnerNote}</p>
+    {capabilities.data?.enabled && <p className="roadmap-note">Catálogo executável: {capabilities.data.catalog.map(x => `${x.key} (${x.types.join(', ')})`).join('; ')}. Use essas chaves nos casos cadastrados.</p>}
     {failures.map((failure, index) => <ErrorNotice key={index} error={failure} />)}{failures.length > 0 && <button className="button" onClick={() => { void project.refetch(); void suites.refetch(); void environments.refetch(); if (suiteId) void cases.refetch(); }}>Recarregar catálogo</button>}
     {project.data?.archivedAt && <p className="error-message">Projetos arquivados não permitem novas execuções.</p>}
     <ol className="run-steps" aria-label="Etapas da configuração">{['Suíte', 'Casos', 'Ambiente', 'Opções', 'Revisão'].map((label, index) => <li key={label} aria-current={step === index + 1 ? 'step' : undefined}>{index + 1}. {label}</li>)}</ol>

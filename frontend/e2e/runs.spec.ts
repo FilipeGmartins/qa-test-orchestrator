@@ -6,8 +6,9 @@ test('configura em cinco etapas, consulta snapshot, cancela e filtra histórico'
   const item = { id: 'c1', testSuiteId: 's1', name: 'Login', stableKey: 'login', tags: ['@smoke'], catalogVersion: 1, status: 'Active' };
   const env = { id: 'e1', name: 'Staging', baseUrl: 'https://example.com/', enabled: true };
   let run: Record<string, unknown> | null = null;
-  await page.route(/\/api\/(?:projects|test-suites|test-runs)(?:[/?]|$)/, route => {
+  await page.route(/\/api\/(?:projects|test-suites|test-runs|runner)(?:[/?]|$)/, route => {
     const req = route.request(); const url = new URL(req.url());
+    if (url.pathname === '/api/runner') return route.fulfill({ json: { enabled: false, catalog: [] } });
     if (url.pathname === '/api/projects/p1') return route.fulfill({ json: project });
     if (url.pathname === '/api/projects/p1/test-suites') return route.fulfill({ json: { items: [suite], total: 1 } });
     if (url.pathname === '/api/test-suites/s1/test-cases') return route.fulfill({ json: { items: [item], total: 1 } });
@@ -41,7 +42,7 @@ test('configura em cinco etapas, consulta snapshot, cancela e filtra histórico'
   await expect(page.getByRole('heading', { name: 'Revise antes de salvar' })).toBeVisible();
   await page.getByRole('button', { name: 'Salvar como pendente' }).click();
   await expect(page.getByRole('status')).toHaveText('Pendente');
-  await expect(page.getByText(/nenhum teste é executado/)).toBeVisible();
+  await expect(page.getByText(/Nenhum teste é executado/)).toBeVisible();
   await page.getByRole('button', { name: 'Cancelar execução' }).click();
   await page.getByRole('button', { name: 'Confirmar cancelamento' }).click();
   await expect(page.getByRole('status')).toHaveText('Cancelada');

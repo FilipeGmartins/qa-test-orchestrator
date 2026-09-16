@@ -67,3 +67,12 @@ Exemplo do corpo de criação:
 Tipos Smoke/Regression/EndToEnd/API/Accessibility; navegadores Chromium/Firefox/WebKit/All; modo Headless/Headed; políticas Always/OnFailure/Never. Workers 1–10, retries 0–5, timeout 5–300. Enums numéricos são rejeitados. 1–100 IDs únicos, ativos, da suíte; tags opcionais até 20, OR por caso. Ambiente deve estar habilitado, fora de Production e no mesmo projeto da suíte. Estado inicial sempre definido pelo servidor. URL, nomes e versões do snapshot são resolvidos no banco, não aceitos do cliente.
 
 404 RUN_NOT_FOUND, 409 CONCURRENT_UPDATE/INVALID_RUN_STATE/PROJECT_ARCHIVED, 400 INVALID_CONFIGURATION/INVALID_REQUEST. Nenhum endpoint público para transições de worker. HTTP 201 significa configuração salva, não teste executado. Configuração imutável; uma nova chamada de criação gera outra solicitação.
+
+
+## Runner — v0.6.0
+- `GET /api/runner`: `{enabled,catalog:[{key,name,types,version}]}`. Enabled indica configuração válida/habilitada, não heartbeat do worker.
+- `POST /api/test-runs/{id}/enqueue`: `{version}`. Somente Pending; Queued repetido é idempotente. Revalida estado/versões do catálogo, origem aprovada, chaves e tipo implementados. Não modifica o snapshot. 400 configuração/catálogo/origem/runner inválidos, 409 versão/estado/projeto arquivado.
+- Cancelar Running grava `cancellationRequested=true` e retorna Running até o worker encerrar. Cancelar Pending/Queued continua imediato.
+- RunDto agora inclui `cancellationRequested`, `progress` (eventos begin/attempt/end), `result` (status,total,passed,failed,skipped) e `runnerError` (mensagem sanitizada). `runnerAvailable` reflete a configuração do servidor. Tentativas incluem key/browser/attempt/status/durationMs. Detalhes de resultados e artefatos completos ficam para a próxima entrega.
+
+Não há endpoint para fornecer scripts, caminhos ou arquivos. Nenhuma rota HTTP pode concluir um job arbitrariamente. API em localhost enquanto autenticação permanece pendente. Configurações antigas Pending exigem confirmação e revalidação; nada é enfileirado automaticamente.

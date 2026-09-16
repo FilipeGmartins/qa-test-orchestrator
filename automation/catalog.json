@@ -1,0 +1,4 @@
+[
+  { "key": "page-title", "name": "Página tem título", "types": ["Smoke", "Regression", "EndToEnd"], "version": 1 },
+  { "key": "http-ok", "name": "URL base responde HTTP 2xx", "types": ["Smoke", "Regression", "API"], "version": 1 }
+]

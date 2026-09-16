@@ -28,11 +28,11 @@ export function App() {
         <NavLink to="/test-runs"><span aria-hidden="true">▷</span> Execuções</NavLink>
         <NavLink to="/settings"><span aria-hidden="true">◎</span> Status do sistema</NavLink>
       </nav>
-      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Runner Playwright</span><span>Evidências</span><span>Presets</span></div>
-      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Execuções · v0.5.0</small></div>
+      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Dashboard</span><span>Evidências</span><span>Presets</span></div>
+      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Runner · v0.6.0</small></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 04</span></header>
+      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 05</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -71,7 +71,7 @@ function Overview() {
       <div className="flow-diagram" aria-label="Fluxo: interface React, API ASP.NET Core e banco PostgreSQL"><div><span>01</span>Interface <small>React + TypeScript</small></div><b aria-hidden="true">↓</b><div><span>02</span>API <small>ASP.NET Core</small></div><b aria-hidden="true">↓</b><div><span>03</span>Banco de dados <small>PostgreSQL</small></div></div>
     </section>
     <SystemHealth />
-    <section className="roadmap" aria-labelledby="roadmap-title"><div className="section-heading"><div><h2 id="roadmap-title">O caminho até a primeira execução</h2><p>Entregas pequenas, com validação em cada etapa.</p></div><a className="intro-link" href="https://github.com/users/FilipeGmartins/projects/1" target="_blank" rel="noreferrer">Acompanhar no GitHub ↗</a></div><ol>{roadmap.map(([number, name, detail, state]) => <li key={number}><span className="step-number">{number}</span><div><h3>{name}</h3><p>{detail}</p></div><span className={number === '01' ? 'step-state current' : 'step-state'}>{state}</span></li>)}</ol><p className="roadmap-note">A integração real com Playwright entra na fase 05. Configurações podem ser salvas como pendentes. Ainda não há processamento de testes ou resultados nesta versão.</p></section>
+    <section className="roadmap" aria-labelledby="roadmap-title"><div className="section-heading"><div><h2 id="roadmap-title">O caminho até a primeira execução</h2><p>Entregas pequenas, com validação em cada etapa.</p></div><a className="intro-link" href="https://github.com/users/FilipeGmartins/projects/1" target="_blank" rel="noreferrer">Acompanhar no GitHub ↗</a></div><ol>{roadmap.map(([number, name, detail, state]) => <li key={number}><span className="step-number">{number}</span><div><h3>{name}</h3><p>{detail}</p></div><span className={number === '01' ? 'step-state current' : 'step-state'}>{state}</span></li>)}</ol><p className="roadmap-note">O runner executa casos do catálogo aprovado. Salve a configuração e confirme a execução nos detalhes; o worker deve estar habilitado no servidor.</p></section>
   </>;
 }
 
