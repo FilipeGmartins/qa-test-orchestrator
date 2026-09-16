@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-16 — 0.7.0 — Resultados e Evidências
+- Tentativas normalizadas e idempotentes por execução/caso/navegador/retry; duração, erro, stack e logs sanitizados e limitados.
+- Screenshot, vídeo e trace registrados com UUID; download vinculado à execução, sem caminhos públicos, com bloqueio de expiração e links de filesystem.
+- Interface de resultados com filtros, detalhes de falha, downloads e histórico por caso acessível também pelo catálogo.
+- Retenção configurável (14 dias por padrão), limpeza de diretórios de execuções terminais, preservando metadados e histórico.
+- Migração AddResultsAndArtifacts e SQL completo. Registros anteriores mantêm o resumo; não inventar detalhes ausentes.
+- 66 testes backend, 38 frontend, 8 E2E e 1 suíte Node aprovados (113 locais). Capturas reais baixadas pela API na integração Chromium/SQLite. PostgreSQL/Compose permanece para #10; autorização por usuário para #8.
+
 ## 2026-09-16 — 0.6.0 — Runner Playwright real
 - Worker separado e fila persistente com claim otimista, lease/heartbeat, recuperação sem replay automático e cancelamento de árvore de processos.
 - Catálogo fixo page-title/http-ok, origens aprovadas e revalidação antes de enqueue; runner desabilitado por padrão, Production bloqueado.

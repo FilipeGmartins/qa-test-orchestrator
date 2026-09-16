@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Runner Playwright (v0.6.0), fase 5.** Projetos, suítes, casos de teste e ambientes com cadastro, edição e consulta. Casos possuem chave permanente, tags e ativação/inativação. Configurações de execução podem ser salvas como pendentes, consultadas e canceladas. O runner processa testes implementados no catálogo do servidor. Dashboard, visualização/download de evidências, autenticação e presets permanecem pendentes. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
+**Entrega atual: Resultados e Evidências (v0.7.0), fase 6.** Projetos, suítes, casos e ambientes; configuração e execução real de testes do catálogo aprovado. Detalhes por tentativa com falhas, duração, logs, downloads de screenshot/vídeo/trace e histórico filtrável por caso. Retenção padrão de 14 dias. Dashboard, autenticação e presets permanecem pendentes. Uso local: autorização por usuário entra na etapa #8. Docker/PostgreSQL continua para o aceite final #10. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
 
 ## Executar com Docker
 

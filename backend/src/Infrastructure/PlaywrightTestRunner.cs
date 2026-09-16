@@ -27,7 +27,7 @@ public sealed class PlaywrightTestRunner(RunnerSettings settings, IRunnerPolicy 
             string? summary = null;
             while (await process.StandardOutput.ReadLineAsync(ct) is { } line)
             {
-                if (line.Length > 8192) throw new InvalidOperationException("Runner protocol limit exceeded.");
+                if (line.Length > 131072) throw new InvalidOperationException("Runner protocol limit exceeded.");
                 if (!line.StartsWith('{')) continue;
                 using var value = JsonDocument.Parse(line);
                 if (!value.RootElement.TryGetProperty("kind", out var kind)) continue;

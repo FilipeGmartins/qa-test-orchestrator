@@ -12,10 +12,19 @@ public sealed class RunWorker(IServiceScopeFactory scopes, ITestRunner runner, I
 {
     public async Task RunAsync(CancellationToken stopping)
     {
+        var nextCleanup = DateTime.MinValue;
         while (!stopping.IsCancellationRequested)
         {
             try
             {
+                if (DateTime.UtcNow >= nextCleanup)
+                {
+                    await using var cleanupScope = scopes.CreateAsyncScope();
+                    try { await cleanupScope.ServiceProvider.GetRequiredService<ResultStore>().CleanupAsync(stopping); }
+                    catch (IOException) { logger.LogWarning("Artifact cleanup deferred: files in use or inaccessible."); }
+                    catch (UnauthorizedAccessException) { logger.LogWarning("Artifact cleanup deferred: check directory permissions."); }
+                    nextCleanup = DateTime.UtcNow.AddMinutes(5);
+                }
                 if (!await ProcessNextAsync(stopping)) await Task.Delay(1000, stopping);
             }
             catch (OperationCanceledException) when (stopping.IsCancellationRequested) { break; }
@@ -53,9 +62,14 @@ public sealed class RunWorker(IServiceScopeFactory scopes, ITestRunner runner, I
         var execution = runner.ExecuteAsync(claimed.Id, snapshot, async json =>
         {
             if (events.Count >= 2000) throw new InvalidOperationException("Too many runner events.");
-            events.Add(JsonSerializer.Deserialize<JsonElement>(json));
+            var value = JsonSerializer.Deserialize<JsonElement>(json);
+            // Public progress remains compact and never contains filesystem metadata.
+            var isAttempt = value.GetProperty("kind").GetString() == "attempt";
+            events.Add(isAttempt ? JsonSerializer.SerializeToElement(new { kind = "attempt", key = value.GetProperty("key").GetString(),
+                browser = value.GetProperty("browser").GetString(), attempt = value.GetProperty("attempt").GetInt32(),
+                status = value.GetProperty("status").GetString() }) : value);
             // Events and heartbeat are serialized below via one gate.
-            if (!await UpdateAsync(claimed.Id, lease, JsonSerializer.Serialize(events), null, null, null)) deadline.Cancel();
+            if (!await UpdateAsync(claimed.Id, lease, JsonSerializer.Serialize(events), null, null, null, isAttempt ? value : null)) deadline.Cancel();
         }, deadline.Token);
         try
         {
@@ -84,7 +98,7 @@ public sealed class RunWorker(IServiceScopeFactory scopes, ITestRunner runner, I
     }
 
     private readonly SemaphoreSlim updateGate = new(1, 1);
-    private async Task<bool> UpdateAsync(Guid id, Guid lease, string? progress, string? result, string? error, RunStatus? finish)
+    private async Task<bool> UpdateAsync(Guid id, Guid lease, string? progress, string? result, string? error, RunStatus? finish, JsonElement? attempt = null)
     {
         await updateGate.WaitAsync();
         try
@@ -96,6 +110,7 @@ public sealed class RunWorker(IServiceScopeFactory scopes, ITestRunner runner, I
             if (finish.HasValue) run.Finish(result, error, finish.Value, DateTime.UtcNow);
             else if (run.CancellationRequested) return false;
             else { run.Heartbeat(DateTime.UtcNow); if (progress is not null) run.RecordProgress(progress); }
+            if (attempt.HasValue) await scope.ServiceProvider.GetRequiredService<ResultStore>().RecordAsync(run, attempt.Value);
             try { await db.SaveChangesAsync(); } catch (DbUpdateConcurrencyException) { return false; }
             return true;
         }

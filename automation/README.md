@@ -1,4 +1,13 @@
-# Runner Playwright — v0.6.0
+# Runner Playwright — v0.7.0
+
+## Resultados e retenção
+Consulte Resultados e evidências nos detalhes da execução, ou Histórico de resultados no catálogo de casos. Cada tentativa tem status/duração/browser, erro/stack/logs do teste e downloads. Capturas são copiadas para nomes UUID e baixadas pelo endpoint vinculado à execução; a pasta nunca é publicada estaticamente. Trace é um ZIP para inspeção no Playwright Trace Viewer local; vídeo WebM e screenshot PNG podem ser abertos após download.
+
+`Runner__RetentionDays` configura 1–365 dias (padrão 14), com mesma configuração na API e worker. Artefato expira para download pela data persistida; limpeza física remove a pasta inteira de execuções terminadas há mais que o prazo. Worker limpa um lote de até 20 a cada cinco minutos entre execuções. Sem worker, execute/agende `dotnet run --project backend/src/Api -- --cleanup-artifacts` (um lote por chamada). Diretórios sem execução no banco são preservados, assim como todos os metadados de tentativas.
+
+Raiz exclusiva do serviço, sem links/junctions. Limpeza valida contenção e árvore antes de apagar. Somente textos recebem redação de padrões conhecidos; binários não são anonimizados. Uso local até autenticação/permissões #8. Limite de 200 MiB por arquivo, até 10 anexos por tentativa; somente PNG/WebM/ZIP do reporter. Textos limitados a 4000 caracteres por campo. Execuções antigas não recebem detalhes retroativos.
+
+## Executar o catálogo
 
 Executa apenas testes implementados no catálogo versionado `catalog.json`; não importa código, comandos ou caminhos fornecidos pela interface. O adapter .NET envia JSON por stdin ao processo Node com ArgumentList e sem shell. `run.mjs` invoca o CLI Playwright instalado em `frontend/node_modules`, com configuração e arquivos de teste fixos. Instale as dependências com `npm ci` em frontend e os navegadores com `npx playwright install chromium firefox webkit` conforme os navegadores usados.
 

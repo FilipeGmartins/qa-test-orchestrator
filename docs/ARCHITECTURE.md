@@ -1,5 +1,14 @@
 # Arquitetura
 
+## Resultados — implementação 0.7.0
+Reporter do Playwright copia até 10 anexos PNG/WebM/ZIP por tentativa (máximo 200 MiB cada) para nomes UUID em `run/evidence`. Emite metadados e textos limitados; ResultStore valida chave contra snapshot, navegador, retry, tamanho real e caminho gerado. Tentativa, artefatos e progresso são salvos na mesma transação e protegidos pelo lease/token da execução. Índice único impede duplicar a mesma tentativa. O JSON público de progresso permanece compacto, sem paths; detalhes vêm dos endpoints paginados.
+
+ITestResults define consultas/download; ResultStore implementa com EF e filesystem. Resultados mantêm nome/chave do snapshot e FK do caso, permitindo histórico mesmo após editar o catálogo. Filtros e paginação são aplicados no banco; anexos são buscados apenas para a página atual. UI faz polling enquanto Running e nova consulta ao entrar no estado terminal.
+
+Logs, mensagens e stack têm limite de 4000 caracteres cada e redação de URLs, caminhos, Authorization/Cookie e campos comuns de segredo. Isso reduz exposição, mas não garante remoção de todo dado sensível arbitrário. Binários não são sanitizados. Downloads usam attachment/octet-stream/no-store/nosniff; verificam runId + artifactId, expiração e componentes sem reparse points. Armazenamento deve pertencer exclusivamente ao serviço; estes checks não substituem isolamento contra um usuário local que possa alterar arquivos simultaneamente.
+
+Limpeza ocorre a cada cinco minutos no loop do worker, em lotes de até 20 execuções terminadas há mais que Runner:RetentionDays (1–365, padrão 14). Comando --cleanup-artifacts executa um lote sem iniciar worker ou HTTP. Valida fronteira e árvore sem links antes de apagar somente a pasta UUID de execução registrada; remove também cópias originais, input e capturas órfãs dessa execução. Marca ArtifactsPurgedAt/DeletedAt, sem apagar tentativas. Diretórios sem execução cadastrada não são removidos. Falhas de arquivo são tentadas no próximo ciclo; API/worker devem compartilhar configuração e armazenamento. Sem worker, agendar o comando para manter limpeza física. Autorização por usuário fica para #8; PostgreSQL/Docker para #10.
+
 ## Decisão inicial
 Monólito modular em ASP.NET Core (.NET 10), React/TypeScript/Vite, Tailwind, React Router e TanStack Query. EF Core com PostgreSQL. Automação Playwright/TypeScript será adicionada na fase 5. Recharts será introduzido com métricas reais. Compose é o ambiente local de referência.
 

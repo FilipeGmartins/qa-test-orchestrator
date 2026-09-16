@@ -1,5 +1,14 @@
 # API
 
+## Resultados — v0.7.0
+- `GET /api/test-runs/{id}/results` e `GET /api/test-cases/{id}/results`: `{items,total,page,pageSize}`. Query: status=all/passed/failed/timedOut/skipped/interrupted; browser=all/Chromium/Firefox/WebKit; page=1–100000; pageSize=1–100 (padrão 12).
+- Cada item: id, runId, caseId, caseName, stableKey, browser, attempt (zero-based), status, durationMs, error, stack, logs, recordedAt e artifacts. Ordem recordedAt/id decrescente. Total conta tentativas, incluindo retries.
+- Artefato público: id, kind (screenshot/video/trace), size em bytes, expiresAt UTC, available. Nenhum path retornado.
+- `GET /api/test-runs/{id}/artifacts/{artifactId}`: attachment binário com nome gerado, no-store e nosniff. 404 se inexistente, de outra execução, expirado, removido ou com caminho inválido; suporta Range. Apenas GET, sem upload nem paths fornecidos pelo cliente.
+- Recursos de consulta inexistentes retornam 404; filtros/paginação inválidos retornam 400. Autorizações por usuário ainda não implementadas; uso local até #8.
+
+Resultados anteriores à versão 0.7 podem retornar lista vazia, mantendo o resumo antigo. Progress continua begin/attempt/end; detalhes de duração, falha e arquivos agora estão na consulta de resultados.
+
 ## Disponível na fundação
 - GET `/api/system`: 200, `{ application, version, api, database }`; database é `available` ou `unavailable`. Diagnóstico não expõe connection string nem detalhes de erro.
 - GET `/api/health/live`: 200, `{ status: "healthy" }`; indica apenas processo vivo.

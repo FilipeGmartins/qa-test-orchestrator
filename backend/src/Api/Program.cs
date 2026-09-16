@@ -4,8 +4,9 @@ using QaTestOrchestrator.Application;
 using QaTestOrchestrator.Infrastructure;
 
 var workerOnly = args.Contains("--worker");
+var cleanupOnly = args.Contains("--cleanup-artifacts");
 var migrateOnly = args.Contains("--migrate");
-var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate" && arg != "--worker").ToArray());
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate" && arg != "--worker" && arg != "--cleanup-artifacts").ToArray());
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
 builder.Services.AddOpenApi();
@@ -29,13 +30,17 @@ var runnerSettings = new RunnerSettings {
     Root = Path.GetFullPath(builder.Configuration["Runner:Root"] ?? "../../../automation", builder.Environment.ContentRootPath),
     Node = builder.Configuration["Runner:Node"] ?? "node",
     ArtifactsRoot = Path.GetFullPath(builder.Configuration["Runner:ArtifactsRoot"] ?? "../../../.cache/run-artifacts", builder.Environment.ContentRootPath),
-    AllowedOrigins = builder.Configuration.GetSection("Runner:AllowedOrigins").Get<string[]>() ?? []
+    AllowedOrigins = builder.Configuration.GetSection("Runner:AllowedOrigins").Get<string[]>() ?? [],
+    RetentionDays = builder.Configuration.GetValue<int?>("Runner:RetentionDays") ?? 14
 };
+if (runnerSettings.RetentionDays is < 1 or > 365) throw new InvalidOperationException("Runner:RetentionDays must be between 1 and 365.");
 builder.Services.AddSingleton(runnerSettings);
 builder.Services.AddSingleton<IRunnerPolicy, RunnerPolicy>();
 builder.Services.AddSingleton<ITestRunner, PlaywrightTestRunner>();
 builder.Services.AddSingleton<RunWorker>();
 builder.Services.AddScoped<RunQueueService>();
+builder.Services.AddScoped<ResultStore>();
+builder.Services.AddScoped<ITestResults>(services => services.GetRequiredService<ResultStore>());
 
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(
     new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)));
@@ -56,11 +61,18 @@ if (workerOnly)
     await app.Services.GetRequiredService<RunWorker>().RunAsync(stopping.Token);
     return;
 }
+if (cleanupOnly)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<ResultStore>().CleanupAsync(CancellationToken.None);
+    return;
+}
 app.UseMiddleware<ExceptionMiddleware>();
 app.MapProjectEndpoints();
 app.MapTestSuiteEndpoints();
 app.MapCatalogEndpoints();
 app.MapTestRunEndpoints();
+app.MapResultEndpoints();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/api/system", (GetSystemStatus query, CancellationToken ct) => query.ExecuteAsync(ct))

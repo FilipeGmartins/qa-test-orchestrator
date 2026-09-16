@@ -32,9 +32,17 @@ test('real Chromium: passing cases, retries, blocked origins and timeout', { tim
     assert.equal(passed.events.filter(x => x.kind === 'attempt').length, 2);
     const artifacts = await fs.readdir(path.join(passed.directory, 'artifacts'), { recursive: true });
     for (const suffix of ['.png', '.webm', '.zip']) assert.ok(artifacts.some(x => x.endsWith(suffix)), `Missing ${suffix} artifact`);
+    const registered = passed.events.filter(x => x.kind === 'attempt').flatMap(x => x.artifacts);
+    for (const kind of ['screenshot', 'video', 'trace']) assert.ok(registered.some(x => x.kind === kind), `Missing ${kind} registration`);
+    for (const item of registered) {
+      assert.match(item.relativePath, /^evidence\/[0-9a-f-]+\.(png|webm|zip)$/);
+      assert.equal((await fs.stat(path.join(passed.directory, item.relativePath))).size, item.size);
+    }
     const failed = await execute({ ...config, baseUrl: origin + '/fail', cases: [{ stableKey: 'http-ok' }], options: { ...config.options, retries: 1 } });
     assert.equal(failed.code, 1); assert.equal(failed.events.at(-1).failed, 1);
     assert.equal(failed.events.filter(x => x.kind === 'attempt').length, 2);
+    assert.ok(failed.events.filter(x => x.kind === 'attempt').every(x => x.error.length > 0 && x.stack.length > 0));
+    assert.ok(!JSON.stringify(failed.events).includes(root));
     const denied = await execute({ ...config, allowedOrigins: [] }); assert.notEqual(denied.code, 0); assert.equal(denied.events.length, 0);
     const unknown = await execute({ ...config, cases: [{ stableKey: '../bad' }] }); assert.notEqual(unknown.code, 0);
     const timeout = await execute({ ...config, baseUrl: origin + '/slow', cases: [{ stableKey: 'page-title' }], options: { ...config.options, timeoutSeconds: 5 } });

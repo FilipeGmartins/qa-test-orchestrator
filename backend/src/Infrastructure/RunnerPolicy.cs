@@ -11,6 +11,7 @@ public sealed class RunnerSettings
     public string Node { get; set; } = "node";
     public string ArtifactsRoot { get; set; } = "";
     public string[] AllowedOrigins { get; set; } = [];
+    public int RetentionDays { get; set; } = 14;
 }
 public sealed class RunnerPolicy(RunnerSettings settings) : IRunnerPolicy
 {

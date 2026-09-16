@@ -9,6 +9,7 @@ test('configura em cinco etapas, consulta snapshot, cancela e filtra histórico'
   await page.route(/\/api\/(?:projects|test-suites|test-runs|runner)(?:[/?]|$)/, route => {
     const req = route.request(); const url = new URL(req.url());
     if (url.pathname === '/api/runner') return route.fulfill({ json: { enabled: false, catalog: [] } });
+    if (url.pathname.endsWith('/results')) return route.fulfill({ json: { items: [], total: 0 } });
     if (url.pathname === '/api/projects/p1') return route.fulfill({ json: project });
     if (url.pathname === '/api/projects/p1/test-suites') return route.fulfill({ json: { items: [suite], total: 1 } });
     if (url.pathname === '/api/test-suites/s1/test-cases') return route.fulfill({ json: { items: [item], total: 1 } });

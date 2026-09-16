@@ -38,6 +38,8 @@ public sealed class TestRun
     public string ProgressJson { get; private set; } = "[]";
     public string? ResultJson { get; private set; }
     public string? RunnerError { get; private set; }
+    public DateTime? ArtifactsPurgedAt { get; private set; }
+    public void MarkArtifactsPurged(DateTime now) { ArtifactsPurgedAt = now; Version = Guid.NewGuid(); }
     public void Claim(Guid leaseId, DateTime now) { Start(now); LeaseId = leaseId; LeaseExpiresAt = now.AddSeconds(30); }
     public void Heartbeat(DateTime now) { if (Status != RunStatus.Running) throw new RunStateException(); LeaseExpiresAt = now.AddSeconds(30); Version = Guid.NewGuid(); }
     public void RequestCancellation(DateTime now)

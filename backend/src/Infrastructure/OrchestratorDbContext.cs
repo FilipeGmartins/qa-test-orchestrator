@@ -16,6 +16,8 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
     public DbSet<ProjectEnvironment> ProjectEnvironments => Set<ProjectEnvironment>();
 
     public DbSet<TestRun> TestRuns => Set<TestRun>();
+    public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
+    public DbSet<TestArtifact> TestArtifacts => Set<TestArtifact>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +84,26 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
         run.HasOne<ProjectEnvironment>().WithMany().HasForeignKey(x => x.EnvironmentId).OnDelete(DeleteBehavior.Restrict);
         run.HasIndex(x => new { x.ProjectId, x.CreatedAt, x.Id });
         run.HasIndex(x => new { x.Status, x.CreatedAt, x.Id });
+        run.HasIndex(x => new { x.ArtifactsPurgedAt, x.FinishedAt });
+        var attempt = modelBuilder.Entity<TestAttempt>();
+        attempt.HasKey(x => x.Id);
+        attempt.HasOne<TestRun>().WithMany().HasForeignKey(x => x.RunId).OnDelete(DeleteBehavior.Restrict);
+        attempt.HasOne<TestCase>().WithMany().HasForeignKey(x => x.CaseId).OnDelete(DeleteBehavior.Restrict);
+        attempt.HasIndex(x => new { x.RunId, x.CaseId, x.Browser, x.Attempt }).IsUnique();
+        attempt.HasIndex(x => new { x.CaseId, x.RecordedAt, x.Id });
+        attempt.Property(x => x.StableKey).HasMaxLength(80);
+        attempt.Property(x => x.CaseName).HasMaxLength(120);
+        attempt.Property(x => x.Browser).HasMaxLength(16);
+        attempt.Property(x => x.Status).HasMaxLength(16);
+        attempt.Property(x => x.Error).HasMaxLength(4000);
+        attempt.Property(x => x.Stack).HasMaxLength(4000);
+        attempt.Property(x => x.Logs).HasMaxLength(4000);
+        var artifact = modelBuilder.Entity<TestArtifact>();
+        artifact.HasKey(x => x.Id);
+        artifact.HasOne<TestAttempt>().WithMany().HasForeignKey(x => x.AttemptId).OnDelete(DeleteBehavior.Restrict);
+        artifact.HasOne<TestRun>().WithMany().HasForeignKey(x => x.RunId).OnDelete(DeleteBehavior.Restrict);
+        artifact.Property(x => x.RelativePath).HasMaxLength(100);
+        artifact.Property(x => x.Kind).HasMaxLength(16);
 
     }
 }
@@ -99,6 +121,8 @@ public sealed class PostgresDatabaseProbe(OrchestratorDbContext database) : IDat
             await database.TestCases.AsNoTracking().AnyAsync(cancellationToken);
             await database.ProjectEnvironments.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestRuns.AsNoTracking().AnyAsync(cancellationToken);
+            await database.TestAttempts.AsNoTracking().AnyAsync(cancellationToken);
+            await database.TestArtifacts.AsNoTracking().AnyAsync(cancellationToken);
             return true;
         }
         catch (NpgsqlException) { return false; }

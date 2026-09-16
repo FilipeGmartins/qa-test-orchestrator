@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { ResultsPanel } from './Results';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../projects/api';
@@ -53,6 +54,7 @@ export function RunDetails() {
     {run.result && <p className="status-message">{run.result.passed} aprovados · {run.result.failed} falhos · {run.result.skipped} ignorados · {run.result.total} testes</p>}
     {!run.cancellationRequested && ['Pending', 'Queued', 'Running'].includes(run.status) && <div className="form-actions">{confirm ? <><p>Confirmar o cancelamento desta solicitação?</p><button className="button danger" disabled={mutation.isPending} onClick={() => mutation.mutate()}>Confirmar cancelamento</button><button className="button" disabled={mutation.isPending} onClick={() => setConfirm(false)}>Voltar</button></> : <button className="button" onClick={() => setConfirm(true)}>Cancelar execução</button>}</div>}
     {mutation.isError && <><ErrorNotice error={mutation.error} /><button className="button" onClick={() => { mutation.reset(); setConfirm(false); void query.refetch(); }}>Recarregar estado</button></>}
+    {!['Pending', 'Queued'].includes(run.status) && <ResultsPanel id={run.id} active={run.status === 'Running'} />}
     <Snapshot configuration={run.configuration} />
   </>;
 }

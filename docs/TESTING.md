@@ -1,5 +1,10 @@
 # Testes e validação
 
+## Resultados — 0.7.0
+66 testes backend, 38 frontend, 8 E2E da interface e 1 suíte Node aprovados: 113 locais. Cobertura nova: registro idempotente, vínculo ao caso, filtros, paginação, texto sanitizado, download por execução, expiração, caminho adulterado e limpeza preservando histórico/execuções ativas. Integração .NET real executa Chromium, registra PNG/WebM/ZIP e baixa os três via API comparando tamanhos. SQLite é exclusivo dos testes.
+
+E2E percorre criar configuração → confirmar execução → acompanhar → falha → download → histórico do caso → filtro, com API controlada. Node comprova capturas reais, associação dos arquivos e falhas/retries. PostgreSQL continua ignorado até #10; autenticação por usuário entra em #8.
+
 ## Suítes — 0.3.0
 32 testes backend, 19 frontend e 5 testes de navegador aprovados (56 no total). A suíte PostgreSQL permanece ignorada sem QA_TEST_DATABASE. Adicionados testes de tags, normalização, limites, status inválido/numérico, ciclo criar/editar/inativar/reativar, paginação, projeto inexistente, isolamento entre projetos, projeto arquivado e rollback quando arquivamento concorrente vence criação de suíte.
 

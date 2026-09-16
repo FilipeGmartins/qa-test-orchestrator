@@ -7,12 +7,15 @@ import { SuiteProjectPicker, SuiteList, SuiteEditor } from './features/suites/Su
 import { CaseCatalog, EnvironmentCatalog } from './features/catalog/Catalog';
 
 import { RunHistory, RunDetails, RunWizard } from './features/runs/Runs';
+import { CaseResults } from './features/runs/Results';
 
 const roadmap = [
   ['01', 'Fundação', 'Estrutura e conectividade', 'Em validação'],
   ['02', 'Projetos', 'Cadastro e organização', 'Disponível'],
   ['03', 'Suítes de teste', 'Suítes, casos e ambientes', 'Disponível'],
   ['04', 'Execuções', 'Configuração e histórico', 'Disponível'],
+  ['05', 'Runner Playwright', 'Catálogo aprovado e fila', 'Disponível'],
+  ['06', 'Resultados e evidências', 'Falhas, arquivos e histórico por caso', 'Disponível'],
 ];
 
 export function App() {
@@ -28,11 +31,11 @@ export function App() {
         <NavLink to="/test-runs"><span aria-hidden="true">▷</span> Execuções</NavLink>
         <NavLink to="/settings"><span aria-hidden="true">◎</span> Status do sistema</NavLink>
       </nav>
-      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Dashboard</span><span>Evidências</span><span>Presets</span></div>
-      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Runner · v0.6.0</small></div>
+      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Dashboard</span><span>Presets</span><span>Autenticação</span></div>
+      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Resultados · v0.7.0</small></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 05</span></header>
+      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 06</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -50,6 +53,7 @@ export function App() {
           <Route path="/projects/:projectId/test-runs" element={<RunHistory />} />
           <Route path="/projects/:projectId/test-runs/new" element={<RunWizard />} />
           <Route path="/test-runs/:id" element={<RunDetails />} />
+          <Route path="/test-cases/:id/results" element={<CaseResults />} />
           <Route path="/settings" element={<><PageTitle eyebrow="DIAGNÓSTICO" title="Status do sistema" description="Acompanhe a conexão entre a interface, a API e o banco de dados." /><SystemHealth /></>} />
           <Route path="*" element={<><PageTitle eyebrow="404" title="Página não encontrada" description="Este endereço não está disponível." /><Link className="button" to="/">Voltar ao início</Link></>} />
         </Routes>

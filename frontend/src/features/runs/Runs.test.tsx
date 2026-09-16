@@ -4,12 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, expect, it, vi } from 'vitest';
 import { App } from '../../App';
+import { resultsApi } from './Results';
 import { runApi, defaultOptions, validateOptions, type TestRun } from './api';
 
 const clients: QueryClient[] = [];
 const run: TestRun = { id: 'r1', projectId: 'p1', status: 'Pending', version: 'v1', createdAt: '2026-09-15T12:00:00Z', startedAt: null, finishedAt: null, runnerAvailable: false,
   configuration: { schemaVersion: 1, projectName: 'Portal', suiteName: 'Smoke', suiteVersion: 's1', environmentName: 'Staging', baseUrl: 'https://example.com/', environmentVersion: 'e1', cases: [{ id: 'c1', stableKey: 'login', name: 'Login', catalogVersion: 1, tags: [] }], tags: [], options: defaultOptions } };
 function mount(path: string) {
+  vi.spyOn(resultsApi, 'list').mockResolvedValue({ items: [], total: 0 });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }); clients.push(client);
   render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><App /></MemoryRouter></QueryClientProvider>);
 }

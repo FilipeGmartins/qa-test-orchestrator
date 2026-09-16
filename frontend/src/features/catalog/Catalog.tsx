@@ -28,7 +28,7 @@ export function CaseCatalog() {
     {suite.isError && <ErrorNotice error={suite.error} />}{project.isError && <ErrorNotice error={project.error} />}
     {project.data?.archivedAt && <p className="status-message">Projeto arquivado: apenas consulta.</p>}
     {suite.data?.status === 'Inactive' && <p className="status-message">Suíte inativa. O catálogo pode ser mantido, mas não poderá ser executado.</p>}
-    <p className="roadmap-note">As chaves identificam os casos de forma permanente. A ligação com testes executáveis será feita na etapa do runner.</p>
+    <p className="roadmap-note">As chaves identificam os casos de forma permanente. Para executar, utilize uma chave implementada no catálogo aprovado do runner.</p>
     {editing && <CaseForm key={editing === 'new' ? 'new' : editing.version} suiteId={suiteId} projectId={projectId!} existing={editing === 'new' ? undefined : editing} readOnly={readOnly} close={() => { setEditing(null); void query.refetch(); }} />}
     <form className="project-filters" onSubmit={event => { event.preventDefault(); setSearch(draft.trim()); setPage(1); }}>
       <div className="field search-field"><label htmlFor="case-search">Buscar por nome ou chave</label><input id="case-search" maxLength={120} value={draft} onChange={e => setDraft(e.target.value)} /></div>
@@ -40,6 +40,7 @@ export function CaseCatalog() {
       <div className="project-grid">{query.data.items.map(item => <article className="project-card" key={item.id}>
         <span className="project-badge">{item.status === 'Active' ? 'Ativo' : 'Inativo'}</span><h2>{item.name}</h2><p><code>{item.stableKey}</code> · revisão {item.catalogVersion}</p><p className="project-description">{item.description || 'Sem descrição.'}</p><div className="suite-tags">{item.tags.map(tag => <span key={tag}>{tag}</span>)}</div>
         {!readOnly && <button className="button" onClick={() => setEditing(item)}>Editar {item.name}</button>}
+        <Link className="button" to={`/test-cases/${item.id}/results`}>Histórico de resultados</Link>
       </article>)}</div>
       <div className="pagination"><button className="button" disabled={page === 1} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page}</span><button className="button" disabled={page * 12 >= query.data.total} onClick={() => setPage(page + 1)}>Próxima</button></div>
     </>}

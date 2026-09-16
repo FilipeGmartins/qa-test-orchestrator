@@ -137,26 +137,39 @@ public sealed class RunnerTests
         {
             var settings = new RunnerSettings { Enabled = true, Root = Path.Combine(directory.FullName, "automation"), ArtifactsRoot = Path.Combine(directory.FullName, ".cache", "integration-artifacts"), AllowedOrigins = [origin] };
             await using var host = new ProjectTestHost(services => services.Replace(ServiceDescriptor.Singleton(settings)));
-            using var client = host.CreateClient(); var run = await CreateRun(client, origin);
+            using var client = host.CreateClient(); var run = await CreateRun(client, origin, capture: true);
             (await client.PostAsJsonAsync($"/api/test-runs/{run.Id}/enqueue", new { run.Version })).EnsureSuccessStatusCode();
             Assert.True(await host.Services.GetRequiredService<RunWorker>().ProcessNextAsync(default));
             var result = (await client.GetFromJsonAsync<RunDto>($"/api/test-runs/{run.Id}", Json))!;
             Assert.True(result.Status == RunStatus.Passed, result.RunnerError);
             Assert.Equal(1, result.Result!.Value.GetProperty("passed").GetInt32());
             Assert.Contains(result.Progress!.Value.EnumerateArray(), x => x.GetProperty("kind").GetString() == "attempt");
+            var attempts = (await client.GetFromJsonAsync<ResultPage>($"/api/test-runs/{run.Id}/results", Json))!;
+            var attempt = Assert.Single(attempts.Items);
+            Assert.Equal("passed", attempt.Status);
+            Assert.Equal(run.Configuration.Cases[0].Id, attempt.CaseId);
+            Assert.True(attempt.DurationMs >= 0);
+            Assert.Equal(3, attempt.Artifacts.Count);
+            foreach (var artifact in attempt.Artifacts)
+            {
+                Assert.True(artifact.Available);
+                var download = await client.GetAsync($"/api/test-runs/{run.Id}/artifacts/{artifact.Id}");
+                download.EnsureSuccessStatusCode();
+                Assert.Equal(artifact.Size, (await download.Content.ReadAsByteArrayAsync()).LongLength);
+            }
             using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => host.Services.GetRequiredService<ITestRunner>().ExecuteAsync(Guid.NewGuid(), result.Configuration, _ => Task.CompletedTask, cancellation.Token));
         }
         finally { serverStop.Cancel(); server.Stop(); try { await serving; } catch (OperationCanceledException) { } }
     }
 
-    private static async Task<RunDto> CreateRun(HttpClient client, string targetUrl = "http://127.0.0.1:5180")
+    internal static async Task<RunDto> CreateRun(HttpClient client, string targetUrl = "http://127.0.0.1:5180", bool capture = false)
     {
         var project = (await (await client.PostAsJsonAsync("/api/projects", new { name = "Runner" })).Content.ReadFromJsonAsync<ProjectDto>())!;
         var suite = (await (await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-suites", new { name = "Smoke" })).Content.ReadFromJsonAsync<SuiteDto>(Json))!;
         var test = (await (await client.PostAsJsonAsync($"/api/test-suites/{suite.Id}/test-cases", new { name = "Title", stableKey = "page-title" })).Content.ReadFromJsonAsync<CaseDto>(Json))!;
         var env = (await (await client.PostAsJsonAsync($"/api/projects/{project.Id}/environments", new { name = "Staging", baseUrl = targetUrl, enabled = true })).Content.ReadFromJsonAsync<EnvironmentDto>(Json))!;
-        var response = await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-runs", new { testSuiteId = suite.Id, environmentId = env.Id, caseIds = new[] { test.Id }, options = new { testType = "Smoke", browser = "Chromium", mode = "Headless", workers = 1, retries = 0, timeoutSeconds = 10, screenshot = "Never", video = "Never", trace = "Never" } });
+        var response = await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-runs", new { testSuiteId = suite.Id, environmentId = env.Id, caseIds = new[] { test.Id }, options = new { testType = "Smoke", browser = "Chromium", mode = "Headless", workers = 1, retries = 0, timeoutSeconds = 20, screenshot = capture ? "Always" : "Never", video = capture ? "Always" : "Never", trace = capture ? "Always" : "Never" } });
         response.EnsureSuccessStatusCode(); return (await response.Content.ReadFromJsonAsync<RunDto>(Json))!;
     }
 }

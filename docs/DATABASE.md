@@ -1,5 +1,10 @@
 # Modelo de dados
 
+## Resultados — migração AddResultsAndArtifacts (0.7.0)
+TestAttempts armazena RunId/CaseId (FKs Restrict), nome/chave do snapshot, browser, attempt, status, duração, textos sanitizados e RecordedAt. Índice único RunId/CaseId/Browser/Attempt e índice CaseId/RecordedAt/Id para histórico. TestArtifacts armazena UUID, AttemptId/RunId (FKs Restrict), caminho relativo interno, kind, size, ExpiresAt e DeletedAt. Binários ficam fora do banco/webroot.
+
+TestRuns recebe ArtifactsPurgedAt nullable e índice ArtifactsPurgedAt/FinishedAt. Migração aditiva, sem reconstruir detalhes que não foram capturados em execuções antigas. SQL idempotente completo: docs/migrations/SchemaWithResults.sql. Migrações não são aplicadas no startup da API; aplicação real e aceite PostgreSQL permanecem na etapa final.
+
 PostgreSQL, UUIDs, datas UTC/timestamptz, FKs explícitas. Projects, TestSuites, TestCases, ProjectEnvironments e TestRuns implementadas; resultados e artefatos continuam planejados. Não usar EnsureCreated como substituto de migrações na aplicação.
 
 - User: Id, ExternalSubject único, DisplayName, Active. Autoria será resolvida pela identidade autenticada.
