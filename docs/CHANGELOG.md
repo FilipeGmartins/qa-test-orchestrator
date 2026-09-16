@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-16 — 0.5.0 — Configuração e Histórico de Execuções
+- Assistente de cinco etapas: suíte, casos/tags, ambiente, opções e revisão.
+- Configuração salva como Pending, com snapshot imutável do catálogo e parâmetros validados.
+- Histórico geral/por projeto, paginação, filtro por estado, detalhes e cancelamento idempotente com versão.
+- Máquina de estados no domínio; concorrência protege criação versus alteração do catálogo e cancelamento versus conclusão.
+- Migração AddTestRuns, SQL completo e teste PostgreSQL ampliado; integração real adiada para a última etapa.
+- 54 testes backend, 35 frontend e 7 de navegador aprovados (96). Runner ainda não integrado; nenhuma execução real ou resultado simulado.
+
 ## 2026-09-15 — 0.4.0 — Casos, Ambientes e Roadmap
 - Repositório privado criado no GitHub, código versionado e dez issues organizadas em quadro Kanban.
 - Cadastro/edição de casos por suíte, chave permanente única, revisão, tags, status, busca e paginação.

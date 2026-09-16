@@ -82,3 +82,11 @@ CatalogService/ICatalogStore mantêm as operações do catálogo fora dos endpoi
 Frontend em features/catalog, com listagem paginada de casos e formulários locais. Campos são preservados em erro; cancelar/recarregar descarta a edição e busca versões atuais. Cache de catálogo e projetos é invalidado ao salvar. A API valida URLs mas não as acessa. Sem execução ou atribuição automática de testes executáveis.
 
 Migração AddCasesAndEnvironments e SQL SchemaWithCatalog.sql. Readiness exige todas as quatro tabelas e nenhuma migração pendente. Validação Docker/PostgreSQL adiada para o fim por decisão do usuário.
+
+
+## Execuções — implementação 0.5.0
+TestRunService valida vínculos e estado de projeto/suíte/ambiente/casos no servidor; cliente envia apenas IDs, tags e opções estruturadas. RunOptions valida enums e limites. Snapshot JSON schemaVersion=1 contém os metadados lidos do banco e opções; é persistido em text e não possui endpoint de edição. DTO expõe objeto estruturado, datas, versão e runnerAvailable=false. CatalogTags centraliza a normalização de tags compartilhada.
+
+Criação atualiza o token do projeto na mesma transação que insere TestRun: todas as alterações do catálogo também tocam esse token, portanto uma alteração concorrente impede salvar configuração com leitura desatualizada. Estado de execução usa token próprio. Cancelamento é idempotente quando já Cancelled e, nos demais estados, exige versão atual; conflito entre conclusão/cancelamento resulta em 409 com rollback. Pending é o estado inicial nesta entrega. Transições Queue/Start/Complete são métodos de domínio, sem endpoints públicos. Estados terminais não reabrem. Cancelamento físico de processo e intenção persistente para worker serão responsabilidade da próxima etapa.
+
+Frontend features/runs mantém formulário durante falhas, revisão antes de salvar, histórico paginado, consulta de snapshot e confirmação de cancelamento; erro de concorrência permite recarregar. Sem polling de progresso fictício. Migração AddTestRuns; índices por projeto/data/ID e status/data/ID, FKs Restrict e readiness na quinta tabela. Não inicia testes nem converte pendências em fila automaticamente.

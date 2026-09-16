@@ -6,11 +6,13 @@ import { SuiteProjectPicker, SuiteList, SuiteEditor } from './features/suites/Su
 
 import { CaseCatalog, EnvironmentCatalog } from './features/catalog/Catalog';
 
+import { RunHistory, RunDetails, RunWizard } from './features/runs/Runs';
+
 const roadmap = [
   ['01', 'Fundação', 'Estrutura e conectividade', 'Em validação'],
   ['02', 'Projetos', 'Cadastro e organização', 'Disponível'],
   ['03', 'Suítes de teste', 'Suítes, casos e ambientes', 'Disponível'],
-  ['04', 'Execuções', 'Configuração e histórico', 'Planejado'],
+  ['04', 'Execuções', 'Configuração e histórico', 'Disponível'],
 ];
 
 export function App() {
@@ -23,13 +25,14 @@ export function App() {
         <NavLink to="/" end><span aria-hidden="true">▦</span> Visão geral</NavLink>
         <NavLink to="/projects"><span aria-hidden="true">▱</span> Projetos</NavLink>
         <NavLink to="/test-suites"><span aria-hidden="true">≡</span> Suítes de teste</NavLink>
+        <NavLink to="/test-runs"><span aria-hidden="true">▷</span> Execuções</NavLink>
         <NavLink to="/settings"><span aria-hidden="true">◎</span> Status do sistema</NavLink>
       </nav>
-      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Runner Playwright</span><span>Execuções</span><span>Presets</span></div>
-      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Catálogo · v0.4.0</small></div>
+      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Runner Playwright</span><span>Evidências</span><span>Presets</span></div>
+      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Execuções · v0.5.0</small></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 03</span></header>
+      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 04</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -43,6 +46,10 @@ export function App() {
           <Route path="/test-suites/:id" element={<SuiteEditor />} />
           <Route path="/test-suites/:suiteId/test-cases" element={<CaseCatalog />} />
           <Route path="/projects/:projectId/environments" element={<EnvironmentCatalog />} />
+          <Route path="/test-runs" element={<RunHistory />} />
+          <Route path="/projects/:projectId/test-runs" element={<RunHistory />} />
+          <Route path="/projects/:projectId/test-runs/new" element={<RunWizard />} />
+          <Route path="/test-runs/:id" element={<RunDetails />} />
           <Route path="/settings" element={<><PageTitle eyebrow="DIAGNÓSTICO" title="Status do sistema" description="Acompanhe a conexão entre a interface, a API e o banco de dados." /><SystemHealth /></>} />
           <Route path="*" element={<><PageTitle eyebrow="404" title="Página não encontrada" description="Este endereço não está disponível." /><Link className="button" to="/">Voltar ao início</Link></>} />
         </Routes>
@@ -64,7 +71,7 @@ function Overview() {
       <div className="flow-diagram" aria-label="Fluxo: interface React, API ASP.NET Core e banco PostgreSQL"><div><span>01</span>Interface <small>React + TypeScript</small></div><b aria-hidden="true">↓</b><div><span>02</span>API <small>ASP.NET Core</small></div><b aria-hidden="true">↓</b><div><span>03</span>Banco de dados <small>PostgreSQL</small></div></div>
     </section>
     <SystemHealth />
-    <section className="roadmap" aria-labelledby="roadmap-title"><div className="section-heading"><div><h2 id="roadmap-title">O caminho até a primeira execução</h2><p>Entregas pequenas, com validação em cada etapa.</p></div><a className="intro-link" href="https://github.com/users/FilipeGmartins/projects/1" target="_blank" rel="noreferrer">Acompanhar no GitHub ↗</a></div><ol>{roadmap.map(([number, name, detail, state]) => <li key={number}><span className="step-number">{number}</span><div><h3>{name}</h3><p>{detail}</p></div><span className={number === '01' ? 'step-state current' : 'step-state'}>{state}</span></li>)}</ol><p className="roadmap-note">A integração real com Playwright entra na fase 05. Ainda não há execução de testes ou resultados nesta versão.</p></section>
+    <section className="roadmap" aria-labelledby="roadmap-title"><div className="section-heading"><div><h2 id="roadmap-title">O caminho até a primeira execução</h2><p>Entregas pequenas, com validação em cada etapa.</p></div><a className="intro-link" href="https://github.com/users/FilipeGmartins/projects/1" target="_blank" rel="noreferrer">Acompanhar no GitHub ↗</a></div><ol>{roadmap.map(([number, name, detail, state]) => <li key={number}><span className="step-number">{number}</span><div><h3>{name}</h3><p>{detail}</p></div><span className={number === '01' ? 'step-state current' : 'step-state'}>{state}</span></li>)}</ol><p className="roadmap-note">A integração real com Playwright entra na fase 05. Configurações podem ser salvas como pendentes. Ainda não há processamento de testes ou resultados nesta versão.</p></section>
   </>;
 }
 

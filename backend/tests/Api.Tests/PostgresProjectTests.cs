@@ -78,6 +78,20 @@ public sealed class PostgresProjectTests
             Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync($"/api/projects/{project.Id}/environments", new { name = "Staging", baseUrl = "https://example.com" })).StatusCode);
             Assert.Contains("login", await client.GetStringAsync($"/api/test-suites/{suiteId}/test-cases"));
 
+
+            using var caseDocument = System.Text.Json.JsonDocument.Parse(await caseResponse.Content.ReadAsStringAsync());
+            using var environmentDocument = System.Text.Json.JsonDocument.Parse(await environmentResponse.Content.ReadAsStringAsync());
+            var runResponse = await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-runs", new {
+                testSuiteId = suiteId, environmentId = environmentDocument.RootElement.GetProperty("id").GetGuid(),
+                caseIds = new[] { caseDocument.RootElement.GetProperty("id").GetGuid() },
+                options = new { testType = "Smoke", browser = "Chromium", mode = "Headless", workers = 1, retries = 0, timeoutSeconds = 60, screenshot = "OnFailure", video = "Never", trace = "OnFailure" }
+            });
+            Assert.Equal(HttpStatusCode.Created, runResponse.StatusCode);
+            using var runDocument = System.Text.Json.JsonDocument.Parse(await runResponse.Content.ReadAsStringAsync());
+            Assert.Equal("Pending", runDocument.RootElement.GetProperty("status").GetString());
+            var runId = runDocument.RootElement.GetProperty("id").GetGuid();
+            (await client.PostAsJsonAsync($"/api/test-runs/{runId}/cancel", new { version = runDocument.RootElement.GetProperty("version").GetGuid() })).EnsureSuccessStatusCode();
+            Assert.Contains("Cancelled", await client.GetStringAsync("/api/test-runs?status=Cancelled"));
             project = (await client.GetFromJsonAsync<ProjectDto>($"/api/projects/{project.Id}"))!;
             var path = $"/api/projects/{project.Id}";
             var edited = await client.PutAsJsonAsync(path, new { name = "Portal editado", project.Description, project.Version });

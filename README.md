@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Catálogo de Testes (v0.4.0), fase 3.** Projetos, suítes, casos de teste e ambientes com cadastro, edição e consulta. Casos possuem chave permanente, tags e ativação/inativação. Execuções, métricas, artefatos e presets ainda não estão implementados. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
+**Entrega atual: Configuração e Histórico de Execuções (v0.5.0), fase 4.** Projetos, suítes, casos de teste e ambientes com cadastro, edição e consulta. Casos possuem chave permanente, tags e ativação/inativação. Configurações de execução podem ser salvas como pendentes, consultadas e canceladas. O processamento Playwright, métricas, artefatos e presets ainda não estão implementados. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
 
 ## Executar com Docker
 
@@ -71,3 +71,9 @@ Quando Docker estiver pronto, validar Compose e a suíte PostgreSQL. Próxima en
 Abra um projeto → **Ambientes** para configurar Development, Staging e Production. Abra uma suíte → **Ver casos de teste** para cadastrar e editar casos. Chaves permanentes são únicas por suíte; casos podem ser inativados. Production permanece desabilitado. Esta entrega cadastra metadados: a ligação com código Playwright entra na etapa do runner.
 
 Por decisão do usuário, a integração Docker/PostgreSQL e o aceite de infraestrutura ficam para a última etapa (#10). As funcionalidades são verificadas com testes locais sem substituir PostgreSQL como banco da aplicação. A migração mais recente é AddCasesAndEnvironments; SQL completo em `docs/migrations/SchemaWithCatalog.sql`.
+
+
+### Execuções — v0.5.0
+Abra um projeto → **Histórico de execuções** → **Nova execução**. O assistente possui cinco etapas: suíte, casos/tags, ambiente, opções e revisão. A confirmação salva uma solicitação **Pendente** com configuração imutável; não dispara testes. Consulte o histórico geral pela navegação **Execuções** ou o histórico de um projeto, filtre por estado e abra os detalhes para cancelar.
+
+O runner será implementado na próxima entrega (#4); não existe worker nem enfileiramento público nesta versão. Solicitações pendentes não devem ser disparadas automaticamente na futura ativação do runner: será necessária ação explícita e revalidação. Nova migração: AddTestRuns; SQL completo `docs/migrations/SchemaWithTestRuns.sql`. Docker/PostgreSQL permanece para a etapa final.

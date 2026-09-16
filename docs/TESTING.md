@@ -48,3 +48,7 @@ Nesta máquina os navegadores foram instalados em `.cache/ms-playwright`. Antes 
 
 ## Catálogo — 0.4.0
 42 testes backend aprovados, 25 frontend e 6 Playwright (73 locais). Cobertura: URLs inválidas e credenciais, bloqueio Production, chave estável/normalização/duplicidade, revisão, filtros/paginação, isolamento por projeto/suíte, versão antiga, arquivamento e rollback concorrente. Interface: validação antes de enviar, preservação em erro, formulário Production bloqueado; navegador percorre criar/editar/inativar caso e configurar Staging. Testes de interface usam API controlada; não comprovam integração de banco. Teste PostgreSQL ampliado para casos/ambientes e todas as migrações, ignorado enquanto QA_TEST_DATABASE não for informado. Validação real ficará na etapa final #10.
+
+
+## Execuções — 0.5.0
+54 testes backend, 35 frontend e 7 testes Playwright aprovados (96 locais). Novos cenários: limites, vínculos entre projetos, suíte/ambiente ativos, seleção de casos, tags, snapshot preservado após editar catálogo, estados terminais, cancelamento idempotente, concorrência na criação e cancelamento/conclusão. Navegador: assistente de cinco etapas, revisão, Pending, cancelamento e filtro do histórico. Teste PostgreSQL ampliado para criação/consulta/cancelamento, ainda ignorado sem QA_TEST_DATABASE. Testes de frontend usam API controlada, sem comprovar execução Playwright real.

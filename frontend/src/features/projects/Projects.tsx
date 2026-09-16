@@ -64,7 +64,7 @@ export function ProjectDetails() {
   const project = query.data;
   return <>
     <Link className="back-link" to="/projects">← Todos os projetos</Link>
-    <Link className="button suite-link" to={`/projects/${id}/test-suites`}>Ver suítes de teste</Link><Link className="button" to={`/projects/${id}/environments`}>Ambientes</Link>
+    <Link className="button suite-link" to={`/projects/${id}/test-suites`}>Ver suítes de teste</Link><Link className="button" to={`/projects/${id}/environments`}>Ambientes</Link><Link className="button" to={`/projects/${id}/test-runs`}>Histórico de execuções</Link>
     <div className="projects-title"><Heading title={project.name} description="Informações e organização do projeto." /><ProjectBadge project={project} /></div>
     {archive.isSuccess && <p className="success-message" role="status">Projeto arquivado. As informações foram preservadas.</p>}
     <section className="project-detail"><h2>Sobre o projeto</h2><p className="description-full">{project.description || 'Nenhuma descrição adicionada.'}</p><dl><div><dt>Criado em</dt><dd>{date(project.createdAt)}</dd></div><div><dt>Atualizado em</dt><dd>{date(project.updatedAt)}</dd></div>{project.archivedAt && <div><dt>Arquivado em</dt><dd>{date(project.archivedAt)}</dd></div>}<div><dt>Identificador</dt><dd className="project-id">{project.id}</dd></div></dl></section>

@@ -25,6 +25,9 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
             {
                 ValidationException validation => (400, "INVALID_CONFIGURATION", validation.Message, validation.Field),
                 BadHttpRequestException => (400, "INVALID_REQUEST", "Verifique o formato dos dados enviados.", (string?)null),
+                RunConflictException => (409, "CONCURRENT_UPDATE", exception.Message, null),
+                RunNotFoundException => (404, "RUN_NOT_FOUND", exception.Message, null),
+                RunStateException => (409, "INVALID_RUN_STATE", exception.Message, null),
                 ResourceNotFoundException => (404, "PROJECT_NOT_FOUND", exception.Message, null),
                 CatalogNotFoundException => (404, "CATALOG_NOT_FOUND", exception.Message, null),
                 CatalogConflictException => (409, "CONCURRENT_UPDATE", exception.Message, null),

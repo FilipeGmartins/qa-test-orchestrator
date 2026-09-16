@@ -42,7 +42,7 @@ Casos e ambientes implementados na entrega 0.4.0 descrita abaixo. A ligação co
 Múltiplos frameworks, execução distribuída/elástica, edição/upload arbitrário de código, clonagem de repositórios informados pela UI, agendamento recorrente, multi-tenancy, notificações, análise por IA, comparações avançadas de flakiness e armazenamento remoto de artefatos. Não antecipar essas implementações.
 
 ## Roadmap e situação
-As dez fases do briefing são mantidas: Fundação → Projetos → Suítes → Execuções → Playwright → Dashboard → Artefatos → Presets → Autenticação → CI/CD. A entrega utilizável do MVP exige artefatos e controle mínimo de acesso; a ordem de liberação os antecipa em relação ao dashboard e aos presets. Fundação, Projetos e cadastro de Suítes implementados; Casos de Teste e Ambientes implementados; próximo item: Execuções. Aceite de infraestrutura depende de iniciar o engine Docker após reiniciar o Windows e executar Compose/PostgreSQL.
+As dez fases do briefing são mantidas: Fundação → Projetos → Suítes → Execuções → Playwright → Dashboard → Artefatos → Presets → Autenticação → CI/CD. A entrega utilizável do MVP exige artefatos e controle mínimo de acesso; a ordem de liberação os antecipa em relação ao dashboard e aos presets. Fundação, Projetos e cadastro de Suítes implementados; Casos de Teste e Ambientes implementados; Configuração e Histórico de Execuções implementados; próximo item: Runner Playwright. Aceite de infraestrutura depende de iniciar o engine Docker após reiniciar o Windows e executar Compose/PostgreSQL.
 
 ## Critérios do produto
 Nenhum comando shell vindo do cliente. Nenhuma execução simulada apresentada como real. Estado terminal consistente, falha de infraestrutura separada de falha de teste, mensagens úteis sem segredos e acessibilidade por teclado. Os testes de criação, resultado, filtros, status e cálculo de sucesso serão acrescentados junto às respectivas features.
@@ -54,3 +54,11 @@ Casos vinculados a uma suíte, com nome, descrição, tags, status Active/Inacti
 Ambientes únicos por projeto e tipo (Development/Staging/Production), URL base HTTP(S) de até 2048 caracteres sem credenciais, query ou fragmento. Desabilitados por padrão; Production não pode ser habilitado nesta fase. Nenhuma requisição é feita para a URL cadastrada. Cadastro local não equivale a autorização de egress: controles do runner e autorização administrativa seguem pendentes.
 
 [Roadmap no GitHub](https://github.com/users/FilipeGmartins/projects/1). Docker/PostgreSQL fica explicitamente por último (#10), conforme decisão do usuário. Aceite local desta entrega não representa validação PostgreSQL.
+
+
+## Quinta entrega — Configuração e Histórico de Execuções (0.5.0)
+Assistente de cinco etapas por projeto: escolher suíte ativa, selecionar 1–100 casos ativos e tags opcionais, escolher ambiente habilitado fora de Production, configurar parâmetros/evidências e revisar. Tags usam semântica OR: cada caso selecionado precisa ter ao menos uma tag solicitada; sem tags, todos os casos selecionados são incluídos. A seleção é explícita, com paginação e até 100 casos por solicitação. Tipo classifica testes e não cria automaticamente testes novos.
+
+Salvar cria Pending, preservando cópia do nome de projeto/suíte, URL/tipo/versão de ambiente, chaves/revisões/tags dos casos e todas as opções. Nenhum campo é editável após salvar; para outra configuração, criar nova solicitação. Histórico geral e por projeto com filtro de estado e paginação; detalhe e cancelamento. Projeto arquivado preserva consulta/cancelamento de solicitações existentes, mas impede novas.
+
+Runner indisponível é informado no produto. Não há endpoint para enfileirar, iniciar ou concluir; essas transições existem apenas no domínio com testes. A próxima etapa deverá exigir confirmação explícita e revalidar catálogo/permissões antes de enfileirar pendências, além de integrar cancelamento do processo. Nenhum resultado simulado ou métrica inventada foi adicionado.

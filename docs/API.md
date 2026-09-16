@@ -45,3 +45,25 @@ Projeto ausente → 404; projeto arquivado → 409 PROJECT_ARCHIVED nas gravaç�
 - `PUT /api/environments/{id}`: `{baseUrl,enabled,version}`; tipo e projeto imutáveis.
 
 URLs HTTP(S) sem credenciais, parâmetros ou fragmentos. Production habilitado retorna 400. Catálogo não executa chamadas para URLs. Casos retornam `catalogVersion` incremental e `version` UUID para concorrência. Ambientes retornam `version` UUID. Projeto arquivado retorna 409. Chave/tipo repetido ou versão antiga retorna 409 CONCURRENT_UPDATE. Item inexistente retorna 404 CATALOG_NOT_FOUND; projeto/suíte inexistente mantém os códigos específicos. Status/tipos numéricos rejeitados.
+
+
+## Execuções — v0.5.0
+- `POST /api/projects/{projectId}/test-runs`: cria configuração Pending, HTTP 201 com Location `/api/test-runs/{id}`.
+- `GET /api/test-runs?projectId=&status=Pending&page=1&pageSize=20`: histórico geral ou por projeto. Omitir projectId para todos. Status all/Pending/Queued/Running/Passed/Failed/Error/Cancelled (nomes exatos). Página 1–100000; tamanho 1–100. Retorno `{items,total,page,pageSize}`.
+- `GET /api/test-runs/{id}`: detalhe com configuration (snapshot), status, version, createdAt/startedAt/finishedAt, runnerAvailable=false.
+- `POST /api/test-runs/{id}/cancel`: `{version}` obrigatório; retorna estado atualizado. Cancelamento repetido de Cancelled é idempotente. Não exige projeto ativo.
+
+Exemplo do corpo de criação:
+```json
+{
+  "testSuiteId": "UUID", "environmentId": "UUID", "caseIds": ["UUID"], "tags": ["@smoke"],
+  "options": {
+    "testType": "Smoke", "browser": "Chromium", "mode": "Headless",
+    "workers": 1, "retries": 0, "timeoutSeconds": 60,
+    "screenshot": "OnFailure", "video": "OnFailure", "trace": "OnFailure"
+  }
+}
+```
+Tipos Smoke/Regression/EndToEnd/API/Accessibility; navegadores Chromium/Firefox/WebKit/All; modo Headless/Headed; políticas Always/OnFailure/Never. Workers 1–10, retries 0–5, timeout 5–300. Enums numéricos são rejeitados. 1–100 IDs únicos, ativos, da suíte; tags opcionais até 20, OR por caso. Ambiente deve estar habilitado, fora de Production e no mesmo projeto da suíte. Estado inicial sempre definido pelo servidor. URL, nomes e versões do snapshot são resolvidos no banco, não aceitos do cliente.
+
+404 RUN_NOT_FOUND, 409 CONCURRENT_UPDATE/INVALID_RUN_STATE/PROJECT_ARCHIVED, 400 INVALID_CONFIGURATION/INVALID_REQUEST. Nenhum endpoint público para transições de worker. HTTP 201 significa configuração salva, não teste executado. Configuração imutável; uma nova chamada de criação gera outra solicitação.

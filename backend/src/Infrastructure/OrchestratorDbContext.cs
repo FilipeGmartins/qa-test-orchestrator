@@ -15,6 +15,8 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
     public DbSet<TestCase> TestCases => Set<TestCase>();
     public DbSet<ProjectEnvironment> ProjectEnvironments => Set<ProjectEnvironment>();
 
+    public DbSet<TestRun> TestRuns => Set<TestRun>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var project = modelBuilder.Entity<Project>();
@@ -67,6 +69,18 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
         environment.Property(x => x.Version).IsConcurrencyToken();
         environment.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
         environment.HasIndex(x => new { x.ProjectId, x.Name }).IsUnique();
+        var run = modelBuilder.Entity<TestRun>();
+        run.ToTable("TestRuns");
+        run.HasKey(x => x.Id);
+        run.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+        run.Property(x => x.Version).IsConcurrencyToken();
+        run.Property(x => x.ConfigurationSnapshot).IsRequired();
+        run.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
+        run.HasOne<TestSuite>().WithMany().HasForeignKey(x => x.TestSuiteId).OnDelete(DeleteBehavior.Restrict);
+        run.HasOne<ProjectEnvironment>().WithMany().HasForeignKey(x => x.EnvironmentId).OnDelete(DeleteBehavior.Restrict);
+        run.HasIndex(x => new { x.ProjectId, x.CreatedAt, x.Id });
+        run.HasIndex(x => new { x.Status, x.CreatedAt, x.Id });
+
     }
 }
 
@@ -82,6 +96,7 @@ public sealed class PostgresDatabaseProbe(OrchestratorDbContext database) : IDat
             await database.TestSuites.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestCases.AsNoTracking().AnyAsync(cancellationToken);
             await database.ProjectEnvironments.AsNoTracking().AnyAsync(cancellationToken);
+            await database.TestRuns.AsNoTracking().AnyAsync(cancellationToken);
             return true;
         }
         catch (NpgsqlException) { return false; }

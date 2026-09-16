@@ -1,6 +1,6 @@
 # Modelo de dados
 
-PostgreSQL, UUIDs, datas UTC/timestamptz, FKs explícitas. Projects, TestSuites, TestCases e ProjectEnvironments implementadas; as entidades de execução continuam planejadas. Não usar EnsureCreated como substituto de migrações na aplicação.
+PostgreSQL, UUIDs, datas UTC/timestamptz, FKs explícitas. Projects, TestSuites, TestCases, ProjectEnvironments e TestRuns implementadas; resultados e artefatos continuam planejados. Não usar EnsureCreated como substituto de migrações na aplicação.
 
 - User: Id, ExternalSubject único, DisplayName, Active. Autoria será resolvida pela identidade autenticada.
 - Project (implementado): Id uuid PK, Name varchar(120) obrigatório, Description varchar(2000) obrigatório com string vazia quando omitido, ArchivedAt timestamptz nullable, CreatedAt/UpdatedAt timestamptz e Version uuid obrigatório/token de concorrência. Índices (CreatedAt, Id) e (ArchivedAt, CreatedAt, Id). Nomes duplicados permitidos. Arquivamento lógico; sem cascata destrutiva de histórico.
@@ -29,3 +29,9 @@ Compose executa job de migração automaticamente antes da API. Fora do Compose:
 Na versão 0.3.0, use `docs/migrations/SchemaWithTestSuites.sql` para o schema completo e incremental. InitialProjects.sql foi preservado como referência da versão anterior.
 
 Na versão 0.4.0, use `docs/migrations/SchemaWithCatalog.sql` para todas as migrações. AddCasesAndEnvironments cria as novas tabelas sem alterar dados existentes.
+
+
+## TestRuns — implementação inicial 0.5.0
+Id UUID PK; ProjectId, TestSuiteId e EnvironmentId FKs Restrict; ConfigurationSnapshot text JSON versionado; Status varchar(16); Version UUID token concorrência; CreatedAt UTC obrigatório, StartedAt/FinishedAt UTC nullable. Índices (ProjectId, CreatedAt, Id), (Status, CreatedAt, Id) e índices das FKs. Vínculos do mesmo projeto são validados na Application. Casos são copiados no snapshot com chave/versão; não há exclusão física do catálogo. A descrição anterior de contadores/worker é desenho futuro: esses campos não foram criados sem resultados reais.
+
+Migração AddTestRuns e script completo `docs/migrations/SchemaWithTestRuns.sql`. Não aplicar Down em dados que devem ser preservados. PostgreSQL real será validado na etapa final.

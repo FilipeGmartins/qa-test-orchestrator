@@ -130,3 +130,12 @@ h1 { margin: 0 0 8px; font-size: clamp(25px, 2.8vw, 35px); letter-spacing: -1.2p
 @media (max-width: 760px) { .app-shell { display: block; } .sidebar { width: 100%; padding: 18px 20px; } .sidebar nav { display: flex; margin-top: 15px; } .sidebar .nav-label, .future-nav, .sidebar-footer { display: none; } .brand small { display: none; } .topbar { height: 54px; padding-inline: 20px; font-size: 10px; } main { padding: 26px 20px; } .intro-panel { grid-template-columns: 1fr; } .flow-diagram { justify-self: stretch; width: 100%; } .flow-diagram small { display: inline; float: right; margin: 3px 0 0; } .service-grid { grid-template-columns: 1fr; } .section-heading { align-items: flex-start; } .section-heading h2 { font-size: 15px; } .section-heading > .muted { display: none; } .page-footer { padding: 20px; } .page-footer span { display: none; } }
 
 .catalog-fields { border: 0; padding: 0; margin: 0; display: grid; gap: 1.25rem; min-width: 0; }
+
+.run-steps { display: flex; flex-wrap: wrap; gap: .7rem; padding: 0; list-style: none; margin: 1.5rem 0; }
+.run-steps li { padding: .5rem .8rem; border-radius: .5rem; background: #eef2ef; }
+.run-steps [aria-current] { background: #164d38; color: white; }
+.run-choice { display: flex; align-items: center; gap: .75rem; padding: .8rem; border: 1px solid #dbe5dd; border-radius: .5rem; overflow-wrap: anywhere; }
+.run-choice input { width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+.run-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+.run-summary dt { font-size: .8rem; color: #52665b; }
+.run-summary dd { margin: .3rem 0 0; font-weight: 600; }
