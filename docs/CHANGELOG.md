@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-16 — 0.8.0 — Dashboard e métricas reais
+- Validação: 72 testes backend, 42 frontend e 9 E2E aprovados (123 nesta etapa), builds e alinhamento de modelo aprovados.
+- Endpoint de métricas com filtros por projeto/período UTC (até 90 dias); agregação no banco sobre resultado final por caso/navegador.
+- Totais, taxa de sucesso sem retries duplicados, duração média da última tentativa avaliada, série diária, execuções/falhas recentes e recuperação em retry.
+- Histórico sem detalhes explicitamente fora dos indicadores de testes; Error/Cancelled/Running separados. Sem dados fictícios quando o banco falha.
+- Dashboard com Recharts carregado sob demanda, alternativa textual, layout móvel, busca/paginação de projetos e navegação para investigação.
+- Sem migração nova; PostgreSQL/Compose continua para #10. Próxima implementação: Presets (#7).
+
 ## 2026-09-16 — 0.7.0 — Resultados e Evidências
 - Tentativas normalizadas e idempotentes por execução/caso/navegador/retry; duração, erro, stack e logs sanitizados e limitados.
 - Screenshot, vídeo e trace registrados com UUID; download vinculado à execução, sem caminhos públicos, com bloqueio de expiração e links de filesystem.

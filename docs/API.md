@@ -1,5 +1,12 @@
 # API
 
+## Dashboard — v0.8.0
+`GET /api/dashboard?projectId={uuid}&from=YYYY-MM-DD&to=YYYY-MM-DD`. ProjectId opcional (inclui arquivados); datas UTC inclusivas, 1–90 dias, sem futuro. Padrão: últimos 30 dias incluindo hoje; só to informado: 30 dias terminando nessa data; só from: até hoje. Filtro usa CreatedAt da execução. 400 para período inválido; 404 para projeto inexistente.
+
+Resposta: from/toExclusive/generatedAt, totalRuns/runCounts por estado, completedRunsWithoutDetails, passed/failed/skipped/interrupted, successRate, averageTestDurationMs, flakyTests, daily, recentRuns, recentFailures, flakyCases. Listas recentes/instabilidade limitadas a 8 e dias sem registros preenchidos com zero. Nunca retorna zeros como substituto de banco indisponível.
+
+Métricas de testes usam a última tentativa por RunId/CaseId/Browser apenas em execuções Passed/Failed; timeout conta como falha. Taxa: passed/(passed+failed), zero sem avaliados. Média em ms das últimas tentativas avaliadas, null sem avaliações. Flaky: resultado final aprovado com tentativa anterior failed/timedOut na mesma execução. Execuções antigas sem TestAttempts entram no total de execuções, mas são explicitamente excluídas dos indicadores de testes. Contagens refletem consultas ao banco; durante novas conclusões concorrentes, seções podem atualizar entre consultas. Polling a cada 30 segundos.
+
 ## Resultados — v0.7.0
 - `GET /api/test-runs/{id}/results` e `GET /api/test-cases/{id}/results`: `{items,total,page,pageSize}`. Query: status=all/passed/failed/timedOut/skipped/interrupted; browser=all/Chromium/Firefox/WebKit; page=1–100000; pageSize=1–100 (padrão 12).
 - Cada item: id, runId, caseId, caseName, stableKey, browser, attempt (zero-based), status, durationMs, error, stack, logs, recordedAt e artifacts. Ordem recordedAt/id decrescente. Total conta tentativas, incluindo retries.

@@ -1,5 +1,10 @@
 # Arquitetura
 
+## Dashboard — implementação 0.8.0
+IDashboard/DashboardStore agregam dados existentes, sem nova tabela ou migração. Consultas EF aplicam projeto/período (até 90 dias UTC), selecionam última tentativa com NOT EXISTS sobre RunId/CaseId/Browser e agregam no banco. Somente listas limitadas e agregados por dia/status são materializados; nenhum arquivo, snapshot ou coleção completa de tentativas é carregado. Execuções Error/Cancelled/Running não contribuem para indicadores de teste. Cobertura de histórico antigo é informada separadamente.
+
+React Query mantém filtros aplicados separados do formulário e atualiza a cada 30 segundos. Seleção de projeto inclui pesquisa/paginação e arquivados. Erro de conexão não vira métricas zeradas. Dashboard usa carregamento sob demanda para não incluir Recharts no bundle inicial; gráfico tem camada de acessibilidade e alternativa textual diária. Referência: [Recharts LineChart](https://recharts.github.io/en-US/api/LineChart/). SQLite cobre cálculos/query translation local; teste PostgreSQL ampliado para validação final #10.
+
 ## Resultados — implementação 0.7.0
 Reporter do Playwright copia até 10 anexos PNG/WebM/ZIP por tentativa (máximo 200 MiB cada) para nomes UUID em `run/evidence`. Emite metadados e textos limitados; ResultStore valida chave contra snapshot, navegador, retry, tamanho real e caminho gerado. Tentativa, artefatos e progresso são salvos na mesma transação e protegidos pelo lease/token da execução. Índice único impede duplicar a mesma tentativa. O JSON público de progresso permanece compacto, sem paths; detalhes vêm dos endpoints paginados.
 

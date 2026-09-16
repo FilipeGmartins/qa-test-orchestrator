@@ -1,5 +1,10 @@
 # Testes e validação
 
+## Dashboard — 0.8.0
+72 testes backend, 42 frontend e 9 E2E de navegador aprovados nesta etapa (123). Backend inclui integração real do runner Chromium; PostgreSQL continua ignorado até #10. Novos testes verificam última tentativa, separação de browsers, timeout, exclusão de Running/Cancelled, histórico antigo sem detalhes, projeto, limite inclusivo de data UTC, dados vazios e períodos inválidos. Teste PostgreSQL foi ampliado para consultar o dashboard quando essa integração for habilitada.
+
+Interface: filtros aplicados somente ao confirmar, falha/recarregamento, cobertura, links de investigação e ausência de duração sem avaliações. E2E valida gráfico Recharts, projeto/datas, série textual e layout móvel sem overflow; screenshots desktop/móvel revisadas. Builds aprovados e nenhuma mudança de modelo pendente. A suíte Node existente não foi alterada nesta etapa.
+
 ## Resultados — 0.7.0
 66 testes backend, 38 frontend, 8 E2E da interface e 1 suíte Node aprovados: 113 locais. Cobertura nova: registro idempotente, vínculo ao caso, filtros, paginação, texto sanitizado, download por execução, expiração, caminho adulterado e limpeza preservando histórico/execuções ativas. Integração .NET real executa Chromium, registra PNG/WebM/ZIP e baixa os três via API comparando tamanhos. SQLite é exclusivo dos testes.
 

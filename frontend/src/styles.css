@@ -145,3 +145,12 @@ h1 { margin: 0 0 8px; font-size: clamp(25px, 2.8vw, 35px); letter-spacing: -1.2p
 .result-attempt { border-top: 1px solid #dbe3ed; padding: 1.5rem 0; min-width: 0; }
 .result-log { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; padding: 1rem; background: #f1f5f9; color: #26334a; border-radius: 8px; }
 .result-attempt summary { cursor: pointer; padding: .6rem 0; }
+.dashboard-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.dashboard-metrics h2 { font-size: .85rem; }
+.metric-value { display: block; font-size: 1.8rem; margin-top: .6rem; }
+.dashboard-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.dashboard-row { border-top: 1px solid #dbe5dd; padding: 1rem 0; overflow-wrap: anywhere; }
+.dashboard-row a { font-weight: 600; text-decoration: underline; }
+.dashboard-row p { white-space: pre-wrap; max-height: 8rem; overflow: auto; }
+.dashboard-chart { min-width: 0; width: 100%; }
+@media (max-width: 850px) { .dashboard-columns { grid-template-columns: 1fr; } }

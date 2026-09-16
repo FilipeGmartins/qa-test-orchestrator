@@ -41,6 +41,7 @@ builder.Services.AddSingleton<RunWorker>();
 builder.Services.AddScoped<RunQueueService>();
 builder.Services.AddScoped<ResultStore>();
 builder.Services.AddScoped<ITestResults>(services => services.GetRequiredService<ResultStore>());
+builder.Services.AddScoped<IDashboard, DashboardStore>();
 
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(
     new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)));
@@ -73,6 +74,7 @@ app.MapTestSuiteEndpoints();
 app.MapCatalogEndpoints();
 app.MapTestRunEndpoints();
 app.MapResultEndpoints();
+app.MapGet("/api/dashboard", (IDashboard service, CancellationToken ct, Guid? projectId = null, DateOnly? from = null, DateOnly? to = null) => service.GetAsync(projectId, from, to, ct)).WithTags("Dashboard");
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/api/system", (GetSystemStatus query, CancellationToken ct) => query.ExecuteAsync(ct))

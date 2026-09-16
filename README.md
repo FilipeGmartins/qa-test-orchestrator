@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Resultados e Evidências (v0.7.0), fase 6.** Projetos, suítes, casos e ambientes; configuração e execução real de testes do catálogo aprovado. Detalhes por tentativa com falhas, duração, logs, downloads de screenshot/vídeo/trace e histórico filtrável por caso. Retenção padrão de 14 dias. Dashboard, autenticação e presets permanecem pendentes. Uso local: autorização por usuário entra na etapa #8. Docker/PostgreSQL continua para o aceite final #10. Consulte [produto e backlog](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATABASE.md), [API](docs/API.md), [testes](docs/TESTING.md) e [changelog](docs/CHANGELOG.md).
+**Entrega atual: Dashboard e métricas reais (v0.8.0).** Em `/dashboard`: filtros por projeto/período, totais, taxa de sucesso, duração média, evolução diária, falhas recentes e recuperação após retry. Projetos, catálogo, execuções, runner e evidências já implementados. Próximas etapas: Presets, Autenticação, CI/CD e Docker/PostgreSQL (último). Uso local até autenticação. Consulte [produto](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [API](docs/API.md) e [testes](docs/TESTING.md).
 
 ## Executar com Docker
 

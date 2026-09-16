@@ -92,6 +92,9 @@ public sealed class PostgresProjectTests
             var runId = runDocument.RootElement.GetProperty("id").GetGuid();
             (await client.PostAsJsonAsync($"/api/test-runs/{runId}/cancel", new { version = runDocument.RootElement.GetProperty("version").GetGuid() })).EnsureSuccessStatusCode();
             Assert.Contains("Cancelled", await client.GetStringAsync("/api/test-runs?status=Cancelled"));
+            var dashboard = await client.GetAsync($"/api/dashboard?projectId={project.Id}");
+            dashboard.EnsureSuccessStatusCode();
+            Assert.Equal(1, (await dashboard.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>()).GetProperty("totalRuns").GetInt32());
             project = (await client.GetFromJsonAsync<ProjectDto>($"/api/projects/{project.Id}"))!;
             var path = $"/api/projects/{project.Id}";
             var edited = await client.PutAsJsonAsync(path, new { name = "Portal editado", project.Description, project.Version });

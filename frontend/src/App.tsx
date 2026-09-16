@@ -8,6 +8,8 @@ import { CaseCatalog, EnvironmentCatalog } from './features/catalog/Catalog';
 
 import { RunHistory, RunDetails, RunWizard } from './features/runs/Runs';
 import { CaseResults } from './features/runs/Results';
+import { lazy, Suspense } from 'react';
+const Dashboard = lazy(() => import('./features/dashboard/Dashboard').then(module => ({ default: module.Dashboard })));
 
 const roadmap = [
   ['01', 'Fundação', 'Estrutura e conectividade', 'Em validação'],
@@ -16,6 +18,7 @@ const roadmap = [
   ['04', 'Execuções', 'Configuração e histórico', 'Disponível'],
   ['05', 'Runner Playwright', 'Catálogo aprovado e fila', 'Disponível'],
   ['06', 'Resultados e evidências', 'Falhas, arquivos e histórico por caso', 'Disponível'],
+  ['07', 'Dashboard', 'Métricas reais e evolução', 'Disponível'],
 ];
 
 export function App() {
@@ -26,19 +29,21 @@ export function App() {
       <p className="nav-label">WORKSPACE</p>
       <nav aria-label="Navegação principal">
         <NavLink to="/" end><span aria-hidden="true">▦</span> Visão geral</NavLink>
+        <NavLink to="/dashboard"><span aria-hidden="true">▥</span> Dashboard</NavLink>
         <NavLink to="/projects"><span aria-hidden="true">▱</span> Projetos</NavLink>
         <NavLink to="/test-suites"><span aria-hidden="true">≡</span> Suítes de teste</NavLink>
         <NavLink to="/test-runs"><span aria-hidden="true">▷</span> Execuções</NavLink>
         <NavLink to="/settings"><span aria-hidden="true">◎</span> Status do sistema</NavLink>
       </nav>
-      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Dashboard</span><span>Presets</span><span>Autenticação</span></div>
-      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Resultados · v0.7.0</small></div>
+      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Presets</span><span>Autenticação</span><span>CI/CD</span></div>
+      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Dashboard · v0.8.0</small></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 06</span></header>
+      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 07</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
+          <Route path="/dashboard" element={<Suspense fallback={<p role="status">Carregando dashboard…</p>}><Dashboard /></Suspense>} />
           <Route path="/projects" element={<ProjectList />} />
           <Route path="/projects/new" element={<ProjectEditor />} />
           <Route path="/projects/:id" element={<ProjectDetails />} />
