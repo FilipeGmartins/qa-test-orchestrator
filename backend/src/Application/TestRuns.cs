@@ -11,11 +11,11 @@ public sealed record RunCaseSnapshot(Guid Id, string StableKey, string Name, int
 public sealed record RunSnapshot(int SchemaVersion, string ProjectName, string SuiteName, Guid SuiteVersion,
     string EnvironmentName, string BaseUrl, Guid EnvironmentVersion, RunCaseSnapshot[] Cases, string[] Tags, RunOptions Options);
 public sealed record RunDto(Guid Id, Guid ProjectId, Guid TestSuiteId, Guid EnvironmentId, RunStatus Status,
-    Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false, bool CancellationRequested = false, JsonElement? Result = null, JsonElement? Progress = null, string? RunnerError = null)
+    Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false, bool CancellationRequested = false, JsonElement? Result = null, JsonElement? Progress = null, string? RunnerError = null, Guid? PresetId = null, int? PresetRevision = null)
 {
     public static RunDto From(TestRun run) => new(run.Id, run.ProjectId, run.TestSuiteId, run.EnvironmentId, run.Status,
         run.Version, run.CreatedAt, run.StartedAt, run.FinishedAt, JsonSerializer.Deserialize<RunSnapshot>(run.ConfigurationSnapshot)!, false, run.CancellationRequested,
-        run.ResultJson is null ? null : JsonSerializer.Deserialize<JsonElement>(run.ResultJson), JsonSerializer.Deserialize<JsonElement>(run.ProgressJson), run.RunnerError);
+        run.ResultJson is null ? null : JsonSerializer.Deserialize<JsonElement>(run.ResultJson), JsonSerializer.Deserialize<JsonElement>(run.ProgressJson), run.RunnerError, run.PresetId, run.PresetRevision);
 }
 public sealed record RunPage(IReadOnlyList<RunDto> Items, int Total, int Page, int PageSize);
 public interface ITestRunStore
@@ -30,7 +30,13 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
 {
     public async Task<RunDto> CreateAsync(Guid projectId, RunRequest request, CancellationToken ct)
     {
+        var snapshot = await PrepareAsync(projectId, request, ct);
+        return await CreatePreparedAsync(projectId, request, snapshot, ct);
+    }
+    public async Task<RunSnapshot> PrepareAsync(Guid projectId, RunRequest request, CancellationToken ct)
+    {
         var project = await projects.FindAsync(projectId, ct) ?? throw new ResourceNotFoundException();
+        if (project.ArchivedAt.HasValue) throw new ProjectArchivedException();
         var suite = await suites.FindAsync(request.TestSuiteId, ct) ?? throw new SuiteNotFoundException();
         var environment = await catalog.FindEnvironmentAsync(request.EnvironmentId, ct) ?? throw new CatalogNotFoundException();
         if (suite.ProjectId != projectId || environment.ProjectId != projectId) throw new ValidationException("Suíte e ambiente devem pertencer ao projeto.", "projectId");
@@ -49,10 +55,16 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
             throw new ValidationException("Cada caso selecionado deve conter ao menos uma das tags informadas.", "tags");
         var snapshot = new RunSnapshot(1, project.Name, suite.Name, suite.Version, environment.Name.ToString(), environment.BaseUrl, environment.Version,
             selected.OrderBy(x => x.StableKey).Select(x => new RunCaseSnapshot(x.Id, x.StableKey, x.Name, x.CatalogVersion, x.Tags)).ToArray(), tags, options);
+        return snapshot;
+    }
+    // Only server-side callers may supply a snapshot, after PrepareAsync in the same scoped unit of work.
+    public async Task<RunDto> CreatePreparedAsync(Guid projectId, RunRequest request, RunSnapshot snapshot, CancellationToken ct, Guid? presetId = null, int? presetRevision = null)
+    {
+        var project = await projects.FindAsync(projectId, ct) ?? throw new ResourceNotFoundException();
         var now = clock.GetUtcNow().UtcDateTime;
         // All catalog writes also update this token, detecting archive/deactivation races.
         project.RegisterCatalogChange(now);
-        var run = TestRun.Create(projectId, suite.Id, environment.Id, JsonSerializer.Serialize(snapshot), now);
+        var run = TestRun.Create(projectId, request.TestSuiteId, request.EnvironmentId, JsonSerializer.Serialize(snapshot), now, presetId, presetRevision);
         await store.AddAsync(run, ct); await store.SaveAsync(ct);
         return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
     }

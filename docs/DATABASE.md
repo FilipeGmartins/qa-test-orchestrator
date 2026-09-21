@@ -1,5 +1,10 @@
 # Modelo de dados
 
+## Presets — migração AddRunPresets (0.9.0)
+RunPresets: Id UUID, ProjectId FK Restrict, Name(120), Description(2000), Revision int, Version UUID concorrente, Archived bool e timestamps UTC. Índice ProjectId/Archived/UpdatedAt/Id. PresetRevisions: PK PresetId/Revision, Name/Description, RequestJson/SnapshotJson text e CreatedAt. Revisões são apenas inseridas pelo serviço, nunca reescritas.
+
+TestRuns recebe PresetId/PresetRevision nullable com FK composta Restrict para PresetRevisions e índice correspondente. Linhas antigas permanecem sem origem de preset. Readiness exige as duas tabelas novas. SQL completo e idempotente: docs/migrations/SchemaWithPresets.sql. Aplicação real da migração permanece para integração final, sem migrar no startup da API.
+
 ## Resultados — migração AddResultsAndArtifacts (0.7.0)
 TestAttempts armazena RunId/CaseId (FKs Restrict), nome/chave do snapshot, browser, attempt, status, duração, textos sanitizados e RecordedAt. Índice único RunId/CaseId/Browser/Attempt e índice CaseId/RecordedAt/Id para histórico. TestArtifacts armazena UUID, AttemptId/RunId (FKs Restrict), caminho relativo interno, kind, size, ExpiresAt e DeletedAt. Binários ficam fora do banco/webroot.
 

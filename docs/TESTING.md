@@ -1,5 +1,12 @@
 # Testes e validação
 
+## Presets — 0.9.0
+76 testes backend, 45 frontend e 10 E2E aprovados (131 verificações distintas). Backend inclui runner real Chromium com PNG/WebM/ZIP; PostgreSQL permanece ignorado sem QA_TEST_DATABASE, até a etapa #10. Cobertura nova: revisões preservadas, origem da execução, arquivamento, concorrência, revalidação de ambiente/casos, isolamento por projeto, configuração inválida e repetição com versão antiga sem duplicar execuções.
+
+Interface e navegador cobrem revisão explícita, Pending sem executar, edição, remoção de casos selecionados e histórico após arquivamento. Os testes da interface usam API controlada. Migração AddRunPresets e SQL gerados; nenhuma divergência entre modelo e migrações.
+
+Nesta máquina, executar sequencialmente evita pressão de recursos: `npm test -- --pool=threads --maxWorkers=1` e `npm run test:e2e -- --workers=1`. A regressão final teve timeout no teste de Projetos (5 s), aprovado ao repetir o arquivo com `--testTimeout=30000`; os outros 37 testes frontend passaram na execução completa. O E2E do dashboard foi aprovado ao repetir com espera inicial de 15 s para o módulo lazy compilado pelo Vite; os outros nove E2E passaram na regressão completa. O teste de runner real recebeu 60 s para inicialização do Chromium e geração de evidências, sem alterar os limites de produção.
+
 ## Dashboard — 0.8.0
 72 testes backend, 42 frontend e 9 E2E de navegador aprovados nesta etapa (123). Backend inclui integração real do runner Chromium; PostgreSQL continua ignorado até #10. Novos testes verificam última tentativa, separação de browsers, timeout, exclusão de Running/Cancelled, histórico antigo sem detalhes, projeto, limite inclusivo de data UTC, dados vazios e períodos inválidos. Teste PostgreSQL foi ampliado para consultar o dashboard quando essa integração for habilitada.
 

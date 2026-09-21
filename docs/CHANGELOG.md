@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-16 — 0.9.0 — Presets reutilizáveis
+- Validação: 76 testes backend, 45 frontend e 10 E2E aprovados; repetições por timeout local detalhadas em TESTING.md. Modelo alinhado à migração.
+- Configurações por projeto com criação/edição no assistente, pesquisa, paginação, arquivamento lógico e revisões preservadas.
+- Revisão revalidada antes de reutilizar; comparação de versão/fingerprint e transação com tokens de projeto/preset protegem alterações concorrentes.
+- Reutilização cria Pending sem enfileirar testes, preservando presetId/presetRevision e snapshot atualizado; Production bloqueado.
+- Migração AddRunPresets, SQL completo e teste PostgreSQL ampliado para a etapa final. Dashboard #6 atualizado no roadmap após o bloqueio de uso anterior.
+
 ## 2026-09-16 — 0.8.0 — Dashboard e métricas reais
 - Validação: 72 testes backend, 42 frontend e 9 E2E aprovados (123 nesta etapa), builds e alinhamento de modelo aprovados.
 - Endpoint de métricas com filtros por projeto/período UTC (até 90 dias); agregação no banco sobre resultado final por caso/navegador.

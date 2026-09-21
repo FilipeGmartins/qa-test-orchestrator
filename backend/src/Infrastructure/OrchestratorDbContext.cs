@@ -18,9 +18,23 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
     public DbSet<TestRun> TestRuns => Set<TestRun>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
     public DbSet<TestArtifact> TestArtifacts => Set<TestArtifact>();
+    public DbSet<RunPreset> RunPresets => Set<RunPreset>();
+    public DbSet<PresetRevision> PresetRevisions => Set<PresetRevision>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var preset = modelBuilder.Entity<RunPreset>();
+        preset.HasKey(x => x.Id);
+        preset.Property(x => x.Name).HasMaxLength(120);
+        preset.Property(x => x.Description).HasMaxLength(2000);
+        preset.Property(x => x.Version).IsConcurrencyToken();
+        preset.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
+        preset.HasIndex(x => new { x.ProjectId, x.Archived, x.UpdatedAt, x.Id });
+        var revision = modelBuilder.Entity<PresetRevision>();
+        revision.HasKey(x => new { x.PresetId, x.Revision });
+        revision.Property(x => x.Name).HasMaxLength(120);
+        revision.Property(x => x.Description).HasMaxLength(2000);
+        revision.HasOne<RunPreset>().WithMany().HasForeignKey(x => x.PresetId).OnDelete(DeleteBehavior.Restrict);
         var project = modelBuilder.Entity<Project>();
         project.ToTable("Projects");
         project.HasKey(x => x.Id);
@@ -74,6 +88,7 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
         var run = modelBuilder.Entity<TestRun>();
         run.ToTable("TestRuns");
         run.HasKey(x => x.Id);
+        run.HasOne<PresetRevision>().WithMany().HasForeignKey(x => new { x.PresetId, x.PresetRevision }).OnDelete(DeleteBehavior.Restrict);
         run.Property(x => x.RunnerError).HasMaxLength(1000);
         run.HasIndex(x => new { x.Status, x.LeaseExpiresAt });
         run.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
@@ -123,6 +138,8 @@ public sealed class PostgresDatabaseProbe(OrchestratorDbContext database) : IDat
             await database.TestRuns.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestAttempts.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestArtifacts.AsNoTracking().AnyAsync(cancellationToken);
+            await database.RunPresets.AsNoTracking().AnyAsync(cancellationToken);
+            await database.PresetRevisions.AsNoTracking().AnyAsync(cancellationToken);
             return true;
         }
         catch (NpgsqlException) { return false; }

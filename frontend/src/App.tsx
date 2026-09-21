@@ -8,6 +8,7 @@ import { CaseCatalog, EnvironmentCatalog } from './features/catalog/Catalog';
 
 import { RunHistory, RunDetails, RunWizard } from './features/runs/Runs';
 import { CaseResults } from './features/runs/Results';
+import { PresetProjects, PresetList, PresetDetails } from './features/presets/Presets';
 import { lazy, Suspense } from 'react';
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard').then(module => ({ default: module.Dashboard })));
 
@@ -19,6 +20,7 @@ const roadmap = [
   ['05', 'Runner Playwright', 'Catálogo aprovado e fila', 'Disponível'],
   ['06', 'Resultados e evidências', 'Falhas, arquivos e histórico por caso', 'Disponível'],
   ['07', 'Dashboard', 'Métricas reais e evolução', 'Disponível'],
+  ['08', 'Presets', 'Configurações reutilizáveis e revisões', 'Disponível'],
 ];
 
 export function App() {
@@ -33,13 +35,14 @@ export function App() {
         <NavLink to="/projects"><span aria-hidden="true">▱</span> Projetos</NavLink>
         <NavLink to="/test-suites"><span aria-hidden="true">≡</span> Suítes de teste</NavLink>
         <NavLink to="/test-runs"><span aria-hidden="true">▷</span> Execuções</NavLink>
+        <NavLink to="/presets"><span aria-hidden="true">◇</span> Presets</NavLink>
         <NavLink to="/settings"><span aria-hidden="true">◎</span> Status do sistema</NavLink>
       </nav>
-      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Presets</span><span>Autenticação</span><span>CI/CD</span></div>
-      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Dashboard · v0.8.0</small></div>
+      <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>Autenticação</span><span>CI/CD</span><span>Docker/PostgreSQL</span></div>
+      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Presets · v0.9.0</small></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 07</span></header>
+      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 08</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -58,6 +61,11 @@ export function App() {
           <Route path="/projects/:projectId/test-runs" element={<RunHistory />} />
           <Route path="/projects/:projectId/test-runs/new" element={<RunWizard />} />
           <Route path="/test-runs/:id" element={<RunDetails />} />
+          <Route path="/presets" element={<PresetProjects />} />
+          <Route path="/presets/:id" element={<PresetDetails />} />
+          <Route path="/projects/:projectId/presets" element={<PresetList />} />
+          <Route path="/projects/:projectId/presets/new" element={<RunWizard presetMode />} />
+          <Route path="/projects/:projectId/presets/:presetId/edit" element={<RunWizard presetMode />} />
           <Route path="/test-cases/:id/results" element={<CaseResults />} />
           <Route path="/settings" element={<><PageTitle eyebrow="DIAGNÓSTICO" title="Status do sistema" description="Acompanhe a conexão entre a interface, a API e o banco de dados." /><SystemHealth /></>} />
           <Route path="*" element={<><PageTitle eyebrow="404" title="Página não encontrada" description="Este endereço não está disponível." /><Link className="button" to="/">Voltar ao início</Link></>} />

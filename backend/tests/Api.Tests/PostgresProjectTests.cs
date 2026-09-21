@@ -95,6 +95,19 @@ public sealed class PostgresProjectTests
             var dashboard = await client.GetAsync($"/api/dashboard?projectId={project.Id}");
             dashboard.EnsureSuccessStatusCode();
             Assert.Equal(1, (await dashboard.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>()).GetProperty("totalRuns").GetInt32());
+            var presetResponse = await client.PostAsJsonAsync($"/api/projects/{project.Id}/presets", new {
+                name = "Regression Full", configuration = new {
+                    testSuiteId = suiteId, environmentId = environmentDocument.RootElement.GetProperty("id").GetGuid(),
+                    caseIds = new[] { caseDocument.RootElement.GetProperty("id").GetGuid() },
+                    options = new { testType = "Smoke", browser = "Chromium", mode = "Headless", workers = 1, retries = 0, timeoutSeconds = 60, screenshot = "Never", video = "Never", trace = "Never" }
+                }
+            });
+            presetResponse.EnsureSuccessStatusCode();
+            var presetId = (await presetResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>()).GetProperty("id").GetGuid();
+            var preview = await client.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/presets/{presetId}/preview");
+            var fromPreset = await client.PostAsJsonAsync($"/api/presets/{presetId}/runs", new { version = preview.GetProperty("version").GetGuid(), fingerprint = preview.GetProperty("fingerprint").GetString() });
+            fromPreset.EnsureSuccessStatusCode();
+            Assert.Equal(presetId, (await fromPreset.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>()).GetProperty("presetId").GetGuid());
             project = (await client.GetFromJsonAsync<ProjectDto>($"/api/projects/{project.Id}"))!;
             var path = $"/api/projects/{project.Id}";
             var edited = await client.PutAsJsonAsync(path, new { name = "Portal editado", project.Description, project.Version });

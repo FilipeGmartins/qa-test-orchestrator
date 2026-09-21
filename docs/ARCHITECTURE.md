@@ -1,5 +1,12 @@
 # Arquitetura
 
+## Presets — implementação 0.9.0
+RunPreset contém identidade/projeto, metadados, revisão atual, arquivamento e Version concorrente. PresetRevision preserva nome/descrição, RunRequest JSON e RunSnapshot JSON de cada gravação. PK composta (PresetId, Revision); TestRun aponta para essa revisão via FK composta nullable, preservando origem sem alterar execuções anteriores. IPresets/PresetStore usam o mesmo DbContext scoped que TestRunService.
+
+PrepareAsync centraliza validações de criação de execução e preset, sem gravar. Preview devolve SHA-256 do snapshot recalculado; Use verifica fingerprint e versão e cria Pending com esse mesmo snapshot validado. Na mesma transação, renova Version do preset e token do projeto para detectar edição/arquivamento concorrente de preset ou catálogo. Uma repetição com versão antiga retorna 409, evitando duplicar solicitação inadvertidamente. Fingerprint não é mecanismo de autenticação. Revisões do preset não são incrementadas apenas por reutilização.
+
+Wizard de cinco etapas compartilhado para criar/editar. Dados de preset carregam antes de montar o formulário; erros preservam campos, com recarregamento explícito para conflitos. Consulta/listagem/histórico paginados. Production continua bloqueado e nenhum nome de exemplo cria permissões especiais. Migração AddRunPresets e SchemaWithPresets.sql; PostgreSQL/Docker continua na etapa final.
+
 ## Dashboard — implementação 0.8.0
 IDashboard/DashboardStore agregam dados existentes, sem nova tabela ou migração. Consultas EF aplicam projeto/período (até 90 dias UTC), selecionam última tentativa com NOT EXISTS sobre RunId/CaseId/Browser e agregam no banco. Somente listas limitadas e agregados por dia/status são materializados; nenhum arquivo, snapshot ou coleção completa de tentativas é carregado. Execuções Error/Cancelled/Running não contribuem para indicadores de teste. Cobertura de histórico antigo é informada separadamente.
 

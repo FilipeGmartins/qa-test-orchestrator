@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { ResultsPanel } from './Results';
+import { presetApi, type Preset } from '../presets/api';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../projects/api';
@@ -15,7 +16,7 @@ function Pages({ page, total, change }: { page: number; total: number; change: (
 function OptionsSummary({ options }: { options: RunOptions }) {
   return <dl className="run-summary">{Object.entries({ Tipo: options.testType, Navegador: options.browser, Modo: options.mode, Workers: options.workers, Retries: options.retries, 'Timeout (s)': options.timeoutSeconds, Screenshot: options.screenshot, Vídeo: options.video, Trace: options.trace }).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>;
 }
-function Snapshot({ configuration: c }: { configuration: RunConfiguration }) {
+export function Snapshot({ configuration: c }: { configuration: RunConfiguration }) {
   return <section className="project-form"><h2>Configuração salva</h2><p>{c.projectName} / {c.suiteName}</p><p>{c.environmentName} · {c.baseUrl}</p><OptionsSummary options={c.options} /><p>Tags: {c.tags.join(' ') || 'Sem filtro de tags'}</p><h3>Casos selecionados ({c.cases.length})</h3><ul>{c.cases.map(x => <li key={x.id}>{x.name} — <code>{x.stableKey}</code> · revisão {x.catalogVersion}</li>)}</ul></section>;
 }
 
@@ -55,23 +56,40 @@ export function RunDetails() {
     {!run.cancellationRequested && ['Pending', 'Queued', 'Running'].includes(run.status) && <div className="form-actions">{confirm ? <><p>Confirmar o cancelamento desta solicitação?</p><button className="button danger" disabled={mutation.isPending} onClick={() => mutation.mutate()}>Confirmar cancelamento</button><button className="button" disabled={mutation.isPending} onClick={() => setConfirm(false)}>Voltar</button></> : <button className="button" onClick={() => setConfirm(true)}>Cancelar execução</button>}</div>}
     {mutation.isError && <><ErrorNotice error={mutation.error} /><button className="button" onClick={() => { mutation.reset(); setConfirm(false); void query.refetch(); }}>Recarregar estado</button></>}
     {!['Pending', 'Queued'].includes(run.status) && <ResultsPanel id={run.id} active={run.status === 'Running'} />}
+    {run.presetId && <p>Origem: <Link to={`/presets/${run.presetId}`}>Preset · revisão {run.presetRevision}</Link></p>}
     <Snapshot configuration={run.configuration} />
   </>;
 }
 
-export function RunWizard() {
+export function RunWizard({ presetMode = false }: { presetMode?: boolean }) {
+  const { presetId, projectId = '' } = useParams();
+  const preset = useQuery({ queryKey: ['preset', presetId], queryFn: ({ signal }) => presetApi.get(presetId!, signal), enabled: !!presetId, refetchOnWindowFocus: false });
+  if (presetId && preset.isPending) return <p>Carregando preset…</p>;
+  if (presetId && preset.isError) return <p role="alert">{preset.error.message}<button className="button" onClick={() => void preset.refetch()}>Recarregar preset</button></p>;
+  if (preset.data && (preset.data.projectId !== projectId || preset.data.archived)) return <p role="alert">Preset indisponível para edição neste projeto.</p>;
+  return <WizardForm key={`${projectId}-${presetId ?? 'new'}-${preset.data?.version ?? ''}`} presetMode={presetMode} preset={preset.data} />;
+}
+function WizardForm({ presetMode, preset }: { presetMode: boolean; preset?: Preset }) {
   const { projectId = '' } = useParams(); const navigate = useNavigate(); const client = useQueryClient();
-  const [step, setStep] = useState(1); const [suiteId, setSuiteId] = useState(''); const [suiteName, setSuiteName] = useState('');
+  const [step, setStep] = useState(1); const [suiteId, setSuiteId] = useState(preset?.configuration.testSuiteId ?? ''); const [suiteName, setSuiteName] = useState(preset?.snapshot.suiteName ?? '');
   const [suitePage, setSuitePage] = useState(1); const [casePage, setCasePage] = useState(1);
-  const [selected, setSelected] = useState<TestCase[]>([]); const [environmentId, setEnvironmentId] = useState('');
-  const [tags, setTags] = useState(''); const [options, setOptions] = useState<RunOptions>({ ...defaultOptions }); const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<TestCase[]>(preset?.snapshot.cases.map(x => ({ ...x, testSuiteId: preset.configuration.testSuiteId, description: '', status: 'Active', version: '' })) ?? []); const [environmentId, setEnvironmentId] = useState(preset?.configuration.environmentId ?? '');
+  const [presetName, setPresetName] = useState(preset?.name ?? ''); const [presetDescription, setPresetDescription] = useState(preset?.description ?? '');
+  const [tags, setTags] = useState(preset?.configuration.tags.join(' ') ?? ''); const [options, setOptions] = useState<RunOptions>({ ...(preset?.configuration.options ?? defaultOptions) }); const [error, setError] = useState<string | null>(null);
   const project = useQuery({ queryKey: ['project', projectId], queryFn: ({ signal }) => projectsApi.get(projectId, signal) });
   const suites = useQuery({ queryKey: ['suites', projectId, 'wizard', suitePage], queryFn: ({ signal }) => suiteApi.list(projectId, '', 'active', suitePage, signal) });
   const cases = useQuery({ queryKey: ['cases', suiteId, 'wizard', casePage], queryFn: ({ signal }) => catalogApi.cases(suiteId, '', 'active', casePage, signal), enabled: !!suiteId });
   const environments = useQuery({ queryKey: ['environments', projectId], queryFn: ({ signal }) => catalogApi.environments(projectId, signal) });
   const capabilities = useQuery({ queryKey: ['runner'], queryFn: ({ signal }) => runApi.capabilities(signal), retry: false });
   const environment = environments.data?.find(x => x.id === environmentId);
-  const mutation = useMutation({ mutationFn: () => runApi.create(projectId, { testSuiteId: suiteId, environmentId, caseIds: selected.map(x => x.id), tags: parseTags(tags), options }), onSuccess: async run => { client.setQueryData(['run', run.id], run); await Promise.all([client.invalidateQueries({ queryKey: ['runs'] }), client.invalidateQueries({ queryKey: ['project', projectId] }), client.invalidateQueries({ queryKey: ['projects'] })]); navigate(`/test-runs/${run.id}`); } });
+  const mutation = useMutation({ mutationFn: async () => {
+    const configuration = { testSuiteId: suiteId, environmentId, caseIds: selected.map(x => x.id), tags: parseTags(tags), options };
+    return presetMode ? presetApi.save(projectId, { name: presetName, description: presetDescription, configuration }, preset) : runApi.create(projectId, configuration);
+  }, onSuccess: async value => {
+    client.setQueryData([presetMode ? 'preset' : 'run', value.id], value);
+    await Promise.all([client.invalidateQueries({ queryKey: ['runs'] }), client.invalidateQueries({ queryKey: ['presets'] }), client.invalidateQueries({ queryKey: ['preset-revisions', value.id] }), client.invalidateQueries({ queryKey: ['project', projectId] }), client.invalidateQueries({ queryKey: ['projects'] })]);
+    navigate(presetMode ? `/presets/${value.id}` : `/test-runs/${value.id}`);
+  } });
   function submit(event: FormEvent) {
     event.preventDefault(); if (mutation.isPending || !project.data || project.data.archivedAt) return;
     const parsed = parseTags(tags);
@@ -79,11 +97,12 @@ export function RunWizard() {
       step === 2 && (parsed.length > 20 || parsed.some(x => !/^@[a-z0-9][a-z0-9_-]{0,39}$/.test(x))) ? 'Informe até 20 tags válidas, como @smoke.' :
       step === 2 && parsed.length > 0 && selected.some(x => !parsed.some(tag => x.tags.includes(tag))) ? 'Cada caso deve conter ao menos uma das tags informadas.' :
       step >= 3 && (!environment?.enabled || environment.name === 'Production') ? 'Selecione um ambiente habilitado.' : step >= 4 ? validateOptions(options) : null;
+    if (step === 5 && presetMode && (!presetName.trim() || presetName.trim().length > 120 || presetDescription.trim().length > 2000)) { setError('Informe nome de 1 a 120 caracteres e descrição de até 2000.'); return; }
     setError(validation); if (validation) return;
     if (step < 5) setStep(step + 1); else mutation.mutate();
   }
   const failures = [project.error, suites.error, cases.error, environments.error].filter(Boolean) as Error[];
-  return <><Link className="back-link" to={`/projects/${projectId}`}>← Voltar ao projeto</Link><div className="page-title"><p className="eyebrow">NOVA EXECUÇÃO</p><h1>Configurar execução</h1><p>{project.data?.name}</p></div><p className="status-message">{runnerNote}</p>
+  return <><Link className="back-link" to={`/projects/${projectId}`}>← Voltar ao projeto</Link><div className="page-title"><p className="eyebrow">{presetMode ? 'PRESET' : 'NOVA EXECUÇÃO'}</p><h1>{presetMode ? preset ? 'Editar preset' : 'Novo preset' : 'Configurar execução'}</h1><p>{project.data?.name}</p></div><p className="status-message">{presetMode ? 'Presets guardam configurações reutilizáveis. Salvar não cria nem inicia uma execução.' : runnerNote}</p>
     {capabilities.data?.enabled && <p className="roadmap-note">Catálogo executável: {capabilities.data.catalog.map(x => `${x.key} (${x.types.join(', ')})`).join('; ')}. Use essas chaves nos casos cadastrados.</p>}
     {failures.map((failure, index) => <ErrorNotice key={index} error={failure} />)}{failures.length > 0 && <button className="button" onClick={() => { void project.refetch(); void suites.refetch(); void environments.refetch(); if (suiteId) void cases.refetch(); }}>Recarregar catálogo</button>}
     {project.data?.archivedAt && <p className="error-message">Projetos arquivados não permitem novas execuções.</p>}
@@ -92,11 +111,12 @@ export function RunWizard() {
       <h2>Etapa {step} de 5</h2>
       {step === 1 && <><h3>Escolha uma suíte ativa</h3>{suites.isPending && <p role="status">Carregando suítes…</p>}{suites.data?.items.map(suite => <label className="run-choice" key={suite.id}><input type="radio" name="suite" checked={suiteId === suite.id} onChange={() => { setSuiteId(suite.id); setSuiteName(suite.name); setSelected([]); setCasePage(1); }} />{suite.name}</label>)}{suites.data && <Pages page={suitePage} total={suites.data.total} change={setSuitePage} />}{suites.data?.total === 0 && <p>Nenhuma suíte ativa. <Link to={`/projects/${projectId}/test-suites`}>Gerenciar suítes</Link></p>}</>}
       {step === 2 && <><h3>Selecione os casos ({selected.length}/100)</h3>{cases.isPending && <p role="status">Carregando casos…</p>}{cases.data?.items.map(item => <label className="run-choice" key={item.id}><input type="checkbox" checked={selected.some(x => x.id === item.id)} disabled={selected.length >= 100 && !selected.some(x => x.id === item.id)} onChange={e => setSelected(e.target.checked ? [...selected, item] : selected.filter(x => x.id !== item.id))} />{item.name} · {item.stableKey}</label>)}{cases.data && <Pages page={casePage} total={cases.data.total} change={setCasePage} />}{cases.data?.total === 0 && <p>Nenhum caso ativo. <Link to={`/test-suites/${suiteId}/test-cases`}>Gerenciar casos</Link></p>}<div className="field"><label htmlFor="run-tags">Tags (opcional)</label><input id="run-tags" maxLength={1000} value={tags} onChange={e => setTags(e.target.value)} /><p className="field-help">Cada caso selecionado deve conter ao menos uma dessas tags. Sem tags, todos os casos selecionados são incluídos.</p></div></>}
+      {step === 2 && selected.length > 0 && <section aria-label="Casos selecionados"><h3>Seleção atual</h3><p>Remova aqui casos de outras páginas ou que tenham sido inativados desde a última revisão.</p><ul>{selected.map(item => <li key={item.id}>{item.name} <button type="button" className="button" aria-label={`Remover ${item.name}`} onClick={() => setSelected(current => current.filter(x => x.id !== item.id))}>Remover</button></li>)}</ul></section>}
       {step === 3 && <><h3>Escolha o ambiente</h3>{environments.isPending && <p role="status">Carregando ambientes…</p>}{environments.data?.map(item => <label className="run-choice" key={item.id}><input type="radio" name="environment" disabled={!item.enabled || item.name === 'Production'} checked={environmentId === item.id} onChange={() => setEnvironmentId(item.id)} />{item.name} · {item.baseUrl}{!item.enabled && ' (desabilitado)'}</label>)}<Link to={`/projects/${projectId}/environments`}>Gerenciar ambientes</Link></>}
       {step === 4 && <><h3>Opções de execução</h3>{Object.entries({ testType: ['Smoke', 'Regression', 'EndToEnd', 'API', 'Accessibility'], browser: ['Chromium', 'Firefox', 'WebKit', 'All'], mode: ['Headless', 'Headed'], screenshot: ['Always', 'OnFailure', 'Never'], video: ['Always', 'OnFailure', 'Never'], trace: ['Always', 'OnFailure', 'Never'] }).map(([key, values]) => <div className="field" key={key}><label htmlFor={`option-${key}`}>{({ testType: 'Tipo de teste', browser: 'Navegador', mode: 'Modo', screenshot: 'Screenshot', video: 'Vídeo', trace: 'Trace' } as Record<string, string>)[key]}</label><select id={`option-${key}`} value={String(options[key as keyof RunOptions])} onChange={e => setOptions({ ...options, [key]: e.target.value })}>{values.map(value => <option key={value}>{value}</option>)}</select></div>)}{(['workers', 'retries', 'timeoutSeconds'] as const).map(key => <div className="field" key={key}><label htmlFor={`option-${key}`}>{({ workers: 'Workers', retries: 'Retries', timeoutSeconds: 'Timeout (segundos)' })[key]}</label><input id={`option-${key}`} type="number" min={key === 'workers' ? 1 : key === 'retries' ? 0 : 5} max={key === 'workers' ? 10 : key === 'retries' ? 5 : 300} value={options[key]} onChange={e => setOptions({ ...options, [key]: Number(e.target.value) })} /></div>)}<p className="field-help">Always = sempre; OnFailure = apenas em falha; Never = nunca. All inclui os três navegadores. Headed exigirá display no worker. Tipo classifica testes existentes.</p></>}
-      {step === 5 && <><h3>Revise antes de salvar</h3><p>{project.data?.name} / {suiteName}</p><p>{environment?.name} · {environment?.baseUrl}</p><OptionsSummary options={options} /><p>Tags: {tags || 'Sem filtro'}</p><ul>{selected.map(item => <li key={item.id}>{item.name} · {item.stableKey} · revisão {item.catalogVersion}</li>)}</ul><p>A configuração será imutável após salvar. Status inicial: Pendente.</p></>}
-      {error && <p className="field-error" role="alert">{error}</p>}{mutation.isError && <ErrorNotice error={mutation.error} />}
-      <div className="form-actions">{step > 1 && <button type="button" className="button" onClick={() => { setError(null); setStep(step - 1); }}>Etapa anterior</button>}<button className="button primary" disabled={failures.length > 0}>{mutation.isPending ? 'Salvando…' : step === 5 ? 'Salvar como pendente' : 'Continuar'}</button></div>
+      {step === 5 && <><h3>Revise antes de salvar</h3>{presetMode && <><div className="field"><label htmlFor="preset-name">Nome do preset</label><input id="preset-name" value={presetName} maxLength={120} onChange={e => setPresetName(e.target.value)} /></div><div className="field"><label htmlFor="preset-description">Descrição do preset</label><textarea id="preset-description" value={presetDescription} maxLength={2000} onChange={e => setPresetDescription(e.target.value)} /></div></>}<p>{project.data?.name} / {suiteName}</p><p>{environment?.name} · {environment?.baseUrl}</p><OptionsSummary options={options} /><p>Tags: {tags || 'Sem filtro'}</p><ul>{selected.map(item => <li key={item.id}>{item.name} · {item.stableKey} · revisão {item.catalogVersion}</li>)}</ul><p>{presetMode ? 'Salvar preserva uma revisão do preset. Nenhum teste será executado.' : 'A configuração será imutável após salvar. Status inicial: Pendente.'}</p></>}
+      {error && <p className="field-error" role="alert">{error}</p>}{mutation.isError && <><ErrorNotice error={mutation.error} />{presetMode && preset && <button type="button" className="button" onClick={() => { mutation.reset(); void client.invalidateQueries({ queryKey: ['preset', preset.id] }); }}>Recarregar preset e descartar alterações</button>}</>}
+      <div className="form-actions">{step > 1 && <button type="button" className="button" onClick={() => { setError(null); setStep(step - 1); }}>Etapa anterior</button>}<button className="button primary" disabled={failures.length > 0}>{mutation.isPending ? 'Salvando…' : step === 5 ? presetMode ? 'Salvar preset' : 'Salvar como pendente' : 'Continuar'}</button></div>
     </fieldset></form>
   </>;
 }

@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Dashboard e métricas reais (v0.8.0).** Em `/dashboard`: filtros por projeto/período, totais, taxa de sucesso, duração média, evolução diária, falhas recentes e recuperação após retry. Projetos, catálogo, execuções, runner e evidências já implementados. Próximas etapas: Presets, Autenticação, CI/CD e Docker/PostgreSQL (último). Uso local até autenticação. Consulte [produto](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [API](docs/API.md) e [testes](docs/TESTING.md).
+**Entrega atual: Presets reutilizáveis (v0.9.0).** Em `/presets`, escolha o projeto para criar, editar, revisar e reutilizar configurações. Revisões são preservadas; reutilização revalida o catálogo e cria uma execução pendente, sem iniciar testes. Dashboard, projetos, catálogo, runner e evidências já implementados. Próximas etapas: Autenticação, CI/CD e Docker/PostgreSQL (último). Uso local até autenticação. Consulte [produto](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [API](docs/API.md) e [testes](docs/TESTING.md).
 
 ## Executar com Docker
 

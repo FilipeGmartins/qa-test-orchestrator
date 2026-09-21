@@ -26,6 +26,8 @@ public sealed class TestRun
     public Guid ProjectId { get; private set; }
     public Guid TestSuiteId { get; private set; }
     public Guid EnvironmentId { get; private set; }
+    public Guid? PresetId { get; private set; }
+    public int? PresetRevision { get; private set; }
     public string ConfigurationSnapshot { get; private set; } = "";
     public RunStatus Status { get; private set; }
     public Guid Version { get; private set; }
@@ -54,10 +56,10 @@ public sealed class TestRun
         ResultJson = result; RunnerError = error; LeaseExpiresAt = null;
     }
     private TestRun() { }
-    public static TestRun Create(Guid projectId, Guid suiteId, Guid environmentId, string snapshot, DateTime now) => new()
+    public static TestRun Create(Guid projectId, Guid suiteId, Guid environmentId, string snapshot, DateTime now, Guid? presetId = null, int? presetRevision = null) => new()
     {
         Id = Guid.NewGuid(), ProjectId = projectId, TestSuiteId = suiteId, EnvironmentId = environmentId,
-        ConfigurationSnapshot = snapshot, CreatedAt = now, Status = RunStatus.Pending, Version = Guid.NewGuid()
+        ConfigurationSnapshot = snapshot, CreatedAt = now, Status = RunStatus.Pending, Version = Guid.NewGuid(), PresetId = presetId, PresetRevision = presetRevision
     };
     public void Queue() { if (Status != RunStatus.Pending) throw new RunStateException(); Status = RunStatus.Queued; Version = Guid.NewGuid(); }
     public void Start(DateTime now) { if (Status != RunStatus.Queued) throw new RunStateException(); Status = RunStatus.Running; StartedAt = now; Version = Guid.NewGuid(); }

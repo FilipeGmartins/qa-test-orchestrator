@@ -13,7 +13,8 @@ test('dashboard filtra projeto/período, renderiza gráfico e permite investigar
       flakyCases: [{ caseId: 'c1', caseName: 'Página inicial', browser: 'Chromium', recoveredRuns: 1 }] } });
   });
   await page.goto('/dashboard');
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  // The first Vite request compiles the lazy chart module on slower local hosts.
+  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('50%', { exact: true })).toBeVisible();
   await expect(page.locator('.recharts-surface').first()).toBeVisible();
   await page.getByLabel('Projeto', { exact: true }).selectOption('p1');

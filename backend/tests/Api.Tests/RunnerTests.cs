@@ -169,7 +169,8 @@ public sealed class RunnerTests
         var suite = (await (await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-suites", new { name = "Smoke" })).Content.ReadFromJsonAsync<SuiteDto>(Json))!;
         var test = (await (await client.PostAsJsonAsync($"/api/test-suites/{suite.Id}/test-cases", new { name = "Title", stableKey = "page-title" })).Content.ReadFromJsonAsync<CaseDto>(Json))!;
         var env = (await (await client.PostAsJsonAsync($"/api/projects/{project.Id}/environments", new { name = "Staging", baseUrl = targetUrl, enabled = true })).Content.ReadFromJsonAsync<EnvironmentDto>(Json))!;
-        var response = await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-runs", new { testSuiteId = suite.Id, environmentId = env.Id, caseIds = new[] { test.Id }, options = new { testType = "Smoke", browser = "Chromium", mode = "Headless", workers = 1, retries = 0, timeoutSeconds = 20, screenshot = capture ? "Always" : "Never", video = capture ? "Always" : "Never", trace = capture ? "Always" : "Never" } });
+        // Browser startup and artifact encoding need headroom on slower developer machines.
+        var response = await client.PostAsJsonAsync($"/api/projects/{project.Id}/test-runs", new { testSuiteId = suite.Id, environmentId = env.Id, caseIds = new[] { test.Id }, options = new { testType = "Smoke", browser = "Chromium", mode = "Headless", workers = 1, retries = 0, timeoutSeconds = capture ? 60 : 20, screenshot = capture ? "Always" : "Never", video = capture ? "Always" : "Never", trace = capture ? "Always" : "Never" } });
         response.EnsureSuccessStatusCode(); return (await response.Content.ReadFromJsonAsync<RunDto>(Json))!;
     }
 }

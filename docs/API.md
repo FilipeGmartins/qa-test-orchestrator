@@ -1,5 +1,16 @@
 # API
 
+## Presets — v0.9.0
+- `GET /api/projects/{projectId}/presets`: search até 120 caracteres, status active/archived/all (padrão active), page 1–100000 e pageSize 1–100 (padrão 12).
+- `POST /api/projects/{projectId}/presets` e `PUT /api/projects/{projectId}/presets/{id}`: `{name,description,configuration,version}`. Configuration usa o contrato RunRequest; version obrigatório na edição. Criação/edição valida catálogo atual e preserva revisão, sem criar execução.
+- `GET /api/presets/{id}` retorna configuração/snapshot da revisão atual, revision incremental, version UUID, projeto, nome, descrição, archived e timestamps. Nomes podem se repetir.
+- `GET /api/presets/{id}/revisions?page=1&pageSize=12`: revisões em ordem decrescente, com configuração e snapshot preservados.
+- `GET /api/presets/{id}/preview`: revalida catálogo e retorna `{version,fingerprint,configuration,revision,name}`. Não grava dados. Fingerprint representa a configuração atual revisada, sem função de autenticação.
+- `POST /api/presets/{id}/runs`: `{version,fingerprint}` cria Pending, com presetId/presetRevision e snapshot atualizado. 409 se preset/configuração mudou; revisão nova é necessária. Não enfileira nem executa.
+- `POST /api/presets/{id}/archive`: `{version}`; arquivamento lógico, preservando revisões/execuções. Repetição de preset já arquivado é idempotente. Sem exclusão física ou transferência de projeto.
+
+400 configuração, status ou paginação inválidos; 404 preset/revisão/projeto ausente; 409 concorrência ou projeto arquivado. Preset arquivado não aceita edição/uso. Projeto arquivado mantém consultas. Production permanece bloqueado. Políticas de runner/origem executável continuam revalidadas no enqueue, após criar Pending.
+
 ## Dashboard — v0.8.0
 `GET /api/dashboard?projectId={uuid}&from=YYYY-MM-DD&to=YYYY-MM-DD`. ProjectId opcional (inclui arquivados); datas UTC inclusivas, 1–90 dias, sem futuro. Padrão: últimos 30 dias incluindo hoje; só to informado: 30 dias terminando nessa data; só from: até hoje. Filtro usa CreatedAt da execução. 400 para período inválido; 404 para projeto inexistente.
 
