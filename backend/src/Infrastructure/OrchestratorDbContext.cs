@@ -44,6 +44,7 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
         registry.Property(x => x.Id).ValueGeneratedNever();
         registry.Property(x => x.Version).IsConcurrencyToken();
         registry.HasData(new AccountRegistry { Id = 1, Version = Guid.Empty });
+        modelBuilder.Entity<TestSuite>().HasIndex(x => x.ProjectId).IsUnique().HasFilter("\"IsPageAudit\" = TRUE").HasDatabaseName("IX_TestSuites_PageAuditProject");
         var preset = modelBuilder.Entity<RunPreset>();
         preset.HasKey(x => x.Id);
         preset.Property(x => x.Name).HasMaxLength(120);

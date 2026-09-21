@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Autenticação, autoria e permissões (v0.10.0).** Login obrigatório, perfis Administrador/Operador/Leitor, usuários, troca de senha, revogação de sessões e autoria das execuções. Veja [primeiro acesso e segurança](docs/AUTHENTICATION.md). Presets, dashboard, catálogo, runner e evidências já implementados. Próximas etapas: CI/CD e Docker/PostgreSQL (último); aceite completo de infraestrutura ainda pendente.
+**Entrega atual: Testes de frontend por URL (v0.11.0).** Informe a página, escolha carregamento/console/rolagem horizontal e tamanhos de tela; revise e execute pelo histórico existente, com screenshots. Veja [guia de testes por URL](docs/FRONTEND-URL.md). Login obrigatório e perfis preservados ([primeiro acesso](docs/AUTHENTICATION.md)). Próximas etapas: CI/CD e Docker/PostgreSQL (último); aceite completo de infraestrutura ainda pendente.
 
 ## Executar com Docker
 

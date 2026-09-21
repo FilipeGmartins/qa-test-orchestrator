@@ -26,6 +26,12 @@ public sealed class RunnerPolicy(RunnerSettings settings) : IRunnerPolicy
             || !settings.AllowedOrigins.Contains(uri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase)
             || uri.UserInfo.Length > 0 || uri.Query.Length > 0 || uri.Fragment.Length > 0)
             throw new ValidationException("A origem do ambiente não foi aprovada na configuração do servidor.", "baseUrl");
+        if (snapshot.PageUrl is not null) {
+            var target = PageTestService.ValidateUrl(snapshot.PageUrl);
+            if (!string.Equals(target.GetLeftPart(UriPartial.Authority), uri.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase)
+                || snapshot.Cases.Any(x => !x.StableKey.StartsWith("frontend-", StringComparison.Ordinal)))
+                throw new ValidationException("A URL da página deve permanecer na origem aprovada do ambiente.", "url");
+        }
         if (snapshot.EnvironmentName == "Production" || snapshot.Cases.Length is < 1 or > 100)
             throw new ValidationException("Configuração não permitida para o runner.", "configuration");
         var catalog = Catalog;

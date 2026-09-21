@@ -8,7 +8,7 @@ export interface RunOptions {
 }
 export const defaultOptions: RunOptions = { testType: 'Smoke', browser: 'Chromium', mode: 'Headless', workers: 1, retries: 0, timeoutSeconds: 60, screenshot: 'OnFailure', video: 'OnFailure', trace: 'OnFailure' };
 export interface RunInput { testSuiteId: string; environmentId: string; caseIds: string[]; tags: string[]; options: RunOptions }
-export interface RunConfiguration {
+export interface RunConfiguration { pageUrl?: string | null;
   schemaVersion: number; projectName: string; suiteName: string; suiteVersion: string;
   environmentName: string; baseUrl: string; environmentVersion: string;
   cases: { id: string; stableKey: string; name: string; catalogVersion: number; tags: string[] }[];

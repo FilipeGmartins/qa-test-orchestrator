@@ -9,7 +9,7 @@ public sealed record RunRequest(Guid TestSuiteId, Guid EnvironmentId, Guid[]? Ca
 public sealed record RunCancelRequest(Guid Version);
 public sealed record RunCaseSnapshot(Guid Id, string StableKey, string Name, int CatalogVersion, string[] Tags);
 public sealed record RunSnapshot(int SchemaVersion, string ProjectName, string SuiteName, Guid SuiteVersion,
-    string EnvironmentName, string BaseUrl, Guid EnvironmentVersion, RunCaseSnapshot[] Cases, string[] Tags, RunOptions Options);
+    string EnvironmentName, string BaseUrl, Guid EnvironmentVersion, RunCaseSnapshot[] Cases, string[] Tags, RunOptions Options, string? PageUrl = null);
 public sealed record RunDto(Guid Id, Guid ProjectId, Guid TestSuiteId, Guid EnvironmentId, RunStatus Status,
     Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false, bool CancellationRequested = false, JsonElement? Result = null, JsonElement? Progress = null, string? RunnerError = null, Guid? PresetId = null, int? PresetRevision = null, Guid? CreatedById = null, string? CreatedByName = null, Guid? EnqueuedById = null, string? EnqueuedByName = null, Guid? CancelledById = null, string? CancelledByName = null)
 {
@@ -57,7 +57,7 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
             selected.OrderBy(x => x.StableKey).Select(x => new RunCaseSnapshot(x.Id, x.StableKey, x.Name, x.CatalogVersion, x.Tags)).ToArray(), tags, options);
         return snapshot;
     }
-    // Only server-side callers may supply a snapshot, after PrepareAsync in the same scoped unit of work.
+    // Only server-side callers may supply a snapshot validated in the same scoped unit of work.
     public async Task<RunDto> CreatePreparedAsync(Guid projectId, RunRequest request, RunSnapshot snapshot, CancellationToken ct, Guid? presetId = null, int? presetRevision = null)
     {
         var project = await projects.FindAsync(projectId, ct) ?? throw new ResourceNotFoundException();

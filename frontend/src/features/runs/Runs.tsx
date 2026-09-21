@@ -18,7 +18,7 @@ function OptionsSummary({ options }: { options: RunOptions }) {
   return <dl className="run-summary">{Object.entries({ Tipo: options.testType, Navegador: options.browser, Modo: options.mode, Workers: options.workers, Retries: options.retries, 'Timeout (s)': options.timeoutSeconds, Screenshot: options.screenshot, Vídeo: options.video, Trace: options.trace }).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>;
 }
 export function Snapshot({ configuration: c }: { configuration: RunConfiguration }) {
-  return <section className="project-form"><h2>Configuração salva</h2><p>{c.projectName} / {c.suiteName}</p><p>{c.environmentName} · {c.baseUrl}</p><OptionsSummary options={c.options} /><p>Tags: {c.tags.join(' ') || 'Sem filtro de tags'}</p><h3>Casos selecionados ({c.cases.length})</h3><ul>{c.cases.map(x => <li key={x.id}>{x.name} — <code>{x.stableKey}</code> · revisão {x.catalogVersion}</li>)}</ul></section>;
+  return <section className="project-form"><h2>Configuração salva</h2><p>{c.projectName} / {c.suiteName}</p><p>{c.environmentName} · {c.baseUrl}</p>{c.pageUrl && <p className="page-target-url">Página testada: <a href={c.pageUrl} target="_blank" rel="noreferrer">{c.pageUrl}</a></p>}<OptionsSummary options={c.options} /><p>Tags: {c.tags.join(' ') || 'Sem filtro de tags'}</p><h3>Casos selecionados ({c.cases.length})</h3><ul>{c.cases.map(x => <li key={x.id}>{x.name} — <code>{x.stableKey}</code> · revisão {x.catalogVersion}</li>)}</ul></section>;
 }
 
 export function RunHistory() {
@@ -32,7 +32,7 @@ export function RunHistory() {
     <div className="field"><label htmlFor="run-filter">Status da execução</label><select id="run-filter" value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="all">Todos</option>{statuses.map(x => <option key={x} value={x}>{statusLabels[x]}</option>)}</select></div>
     {query.isPending ? <p role="status">Carregando execuções…</p> : query.isError ? <><ErrorNotice error={query.error} /><button className="button" onClick={() => void query.refetch()}>Tentar novamente</button></> : <>
       <p role="status">{query.data.total} execuções encontradas</p>{!query.data.total && <p className="empty-projects">Nenhuma execução neste filtro.</p>}
-      <div className="project-grid">{query.data.items.map(run => <article className="project-card" key={run.id}><span className="project-badge">{statusLabels[run.status]}</span><h2>{run.configuration.suiteName}</h2><p>{run.configuration.projectName} · {run.configuration.environmentName}</p><p>{new Date(run.createdAt).toLocaleString('pt-BR')}</p><p>{run.configuration.cases.length} casos · {run.configuration.options.browser}</p><Link className="button" to={`/test-runs/${run.id}`}>Ver execução</Link></article>)}</div>
+      <div className="project-grid">{query.data.items.map(run => <article className="project-card" key={run.id}><span className="project-badge">{statusLabels[run.status]}</span><h2>{run.configuration.suiteName}</h2><p>{run.configuration.projectName} · {run.configuration.environmentName}</p>{run.configuration.pageUrl && <p className="project-description">{run.configuration.pageUrl}</p>}<p>{new Date(run.createdAt).toLocaleString('pt-BR')}</p><p>{run.configuration.cases.length} casos · {run.configuration.options.browser}</p><Link className="button" to={`/test-runs/${run.id}`}>Ver execução</Link></article>)}</div>
       <Pages page={page} total={query.data.total} change={setPage} />
     </>}
   </>;

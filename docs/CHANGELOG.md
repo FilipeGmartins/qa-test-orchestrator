@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-21 — 0.11.0 — Testes de frontend por URL
+- Validação: 89 backend, 51 frontend, 13 E2E e 2 testes Node aprovados, builds e migrações alinhados; PostgreSQL continua para #10.
+- Tela com projeto/ambiente/URL, seleção de verificações e tamanhos de tela, revisão e criação Pending sem execução automática.
+- Nove casos confiáveis para carregamento/console/rolagem horizontal em desktop/tablet/celular; screenshots e trace em falha no histórico existente.
+- Suíte por projeto criada atomicamente e reutilizada, URL específica no snapshot sem alterar ambiente, autoria e permissões preservadas.
+- Bloqueio de redirects HTTP no runner após teste real detectar escape da rota; casos frontend também bloqueiam requisições de escrita. Origem deve estar aprovada pelo mantenedor.
+- Migração AddPageAudits e documentação operacional; PostgreSQL/Docker segue para a etapa final.
+
+
 ## 2026-09-21 — 0.10.0 — Autenticação, autoria e permissões
 - Validação: 85 backend, 48 frontend e 12 E2E aprovados; builds e alinhamento de migração aprovados. PostgreSQL permanece para #10.
 - Login obrigatório, cookie HttpOnly/SameSite, antiforgery em escritas, sessões de 8 horas e revogação no servidor.

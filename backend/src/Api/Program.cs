@@ -45,6 +45,7 @@ builder.Services.AddScoped<ResultStore>();
 builder.Services.AddScoped<ITestResults>(services => services.GetRequiredService<ResultStore>());
 builder.Services.AddScoped<IDashboard, DashboardStore>();
 builder.Services.AddScoped<IPresets, PresetStore>();
+builder.Services.AddScoped<PageTestService>();
 
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(
     new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)));
@@ -88,6 +89,9 @@ app.MapCatalogEndpoints();
 app.MapTestRunEndpoints();
 app.MapResultEndpoints();
 app.MapPresetEndpoints();
+app.MapPost("/api/projects/{projectId:guid}/page-tests", async (Guid projectId, PageTestRequest request, PageTestService service, CancellationToken ct) => {
+    var run = await service.Create(projectId, request, ct); return Results.Created($"/api/test-runs/{run.Id}", run);
+}).WithTags("Frontend Tests");
 app.MapGet("/api/dashboard", (IDashboard service, CancellationToken ct, Guid? projectId = null, DateOnly? from = null, DateOnly? to = null) => service.GetAsync(projectId, from, to, ct)).WithTags("Dashboard");
 if (app.Environment.IsDevelopment()) app.MapOpenApi().RequireAuthorization("Admin");
 

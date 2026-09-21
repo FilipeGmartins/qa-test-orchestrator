@@ -1,5 +1,9 @@
 # Modelo de dados
 
+## Frontend por URL — 0.11.0
+AddPageAudits acrescenta TestSuites.IsPageAudit (false para históricos) e índice único parcial por ProjectId onde IsPageAudit=true. Snapshot JSON de TestRuns aceita pageUrl opcional. Criação da suíte/casos/execução usa a transação de SaveChanges; ambiente não é modificado. Script SchemaWithPageAudits.sql. Validação real PostgreSQL continua para #10.
+
+
 ## Autenticação — 0.10.0
 Migração AddAuthentication: Accounts (login normalizado único, hash, perfil, ativação, versão, bloqueio), LoginSessions (FK da conta, versão da conta e expiração) e AccountRegistries (linha única semeada pela migração para controle de concorrência). Não semeia credenciais. TestRuns recebe seis colunas nullable de autoria; históricos preservados. Readiness verifica as novas tabelas e migrações. PostgreSQL/Compose continuam para #10.
 

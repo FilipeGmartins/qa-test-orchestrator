@@ -1,5 +1,12 @@
 # Testes e validação
 
+## Frontend por URL — 0.11.0
+89 testes backend, 51 frontend, 13 E2E da interface e 2 testes Node aprovados (155 verificações distintas). Backend inclui integração real API → fila SQLite → Chromium para pageUrl diferente da base do ambiente, três resultados persistidos e capturas baixadas com dimensões PNG verificadas. PostgreSQL continua ignorado para a etapa #10.
+
+Node comprova nove combinações de verificações/telas e dimensões 1440×900, 768×1024, 390×844; páginas com recurso 404, console.error/erro JS e overflow reprovam; redirect para servidor não aprovado e POST são bloqueados sem atingir os destinos. O teste encontrou escape de redirects na abordagem anterior; a correção bloqueia respostas 3xx com Location antes de devolvê-las ao browser. Os casos antigos do runner também passaram na regressão.
+
+API cobre Pending sem execução automática, reutilização de uma suíte/nove casos, preservação do ambiente, autoria, URL inválida/origem negada, escolha inválida, ambiente de outro projeto, suíte inativa, ambiente desabilitado, projeto arquivado, Reader e revalidação da política no runner. Vitest verifica revisão obrigatória, mesma origem e preservação em erro. E2E atravessa seleção → revisão → Pending → confirmação → resultado, e verifica layout móvel; respostas de interface são controladas. Capturas desktop/móvel revisadas. Build e alinhamento de migração aprovados; SQL SchemaWithPageAudits.sql gerado.
+
 ## Autenticação — 0.10.0
 85 testes backend, 48 frontend e 12 E2E aprovados (145 verificações distintas). Builds aprovados e modelo sem migração pendente. PostgreSQL continua ignorado sem QA_TEST_DATABASE; aceite de infraestrutura permanece para #10.
 

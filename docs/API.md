@@ -1,5 +1,9 @@
 # API
 
+## Frontend por URL — 0.11.0
+POST /api/projects/{projectId}/page-tests, somente Admin/Operator e com antiforgery. Body: {environmentId, url, checks, devices}. Checks: load/console/layout; devices: desktop/tablet/mobile; 1–3 valores distintos de cada. URL HTTP(S) até 2000 caracteres, sem credenciais/query/fragmento, mesma origem do ambiente e aprovada em Runner:AllowedOrigins. Resposta 201 RunDto Pending. Nenhuma chamada ao alvo durante criação. Usar enqueue existente para iniciar. Snapshot inclui pageUrl, separado de baseUrl. Estado de projeto/catálogo/ambiente e versão são revalidados no fluxo de enqueue. Detalhes e limites em FRONTEND-URL.md.
+
+
 ## Autenticação — 0.10.0
 Todas as rotas de dados exigem sessão; apenas /api/auth/login, /api/auth/csrf e health/live/ready são anônimas. Toda escrita exige X-CSRF-Token + cookie antiforgery. 401 = sessão ausente/expirada, 403 = perfil insuficiente, 400 CSRF_INVALID = token/cookie inválido, 429 = limite de tentativas.
 

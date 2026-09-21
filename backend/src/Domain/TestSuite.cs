@@ -5,6 +5,7 @@ public enum TestSuiteStatus { Active, Inactive }
 public sealed class TestSuite
 {
     public Guid Id { get; private set; }
+    public bool IsPageAudit { get; private set; }
     public Guid ProjectId { get; private set; }
     public string Name { get; private set; } = "";
     public string Description { get; private set; } = "";
@@ -21,6 +22,12 @@ public sealed class TestSuite
         var suite = new TestSuite { Id = Guid.NewGuid(), ProjectId = projectId, CreatedAt = now };
         suite.Edit(name, description, tags, status, now);
         return suite;
+    }
+
+    public static TestSuite CreatePageAudit(Guid projectId, DateTime now)
+    {
+        var suite = Create(projectId, "Frontend por URL", "Verificações de página em desktop, tablet e celular.", ["@frontend-url"], TestSuiteStatus.Active, now);
+        suite.IsPageAudit = true; return suite;
     }
 
     public void Edit(string? name, string? description, string[]? tags, TestSuiteStatus status, DateTime now)

@@ -1,4 +1,112 @@
 [
-  { "key": "page-title", "name": "Página tem título", "types": ["Smoke", "Regression", "EndToEnd"], "version": 1 },
-  { "key": "http-ok", "name": "URL base responde HTTP 2xx", "types": ["Smoke", "Regression", "API"], "version": 1 }
+  {
+    "key": "page-title",
+    "name": "Página tem título",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "http-ok",
+    "name": "URL base responde HTTP 2xx",
+    "types": [
+      "Smoke",
+      "Regression",
+      "API"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-load-desktop",
+    "name": "Carregamento · desktop",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-load-tablet",
+    "name": "Carregamento · tablet",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-load-mobile",
+    "name": "Carregamento · mobile",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-console-desktop",
+    "name": "Erros JavaScript · desktop",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-console-tablet",
+    "name": "Erros JavaScript · tablet",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-console-mobile",
+    "name": "Erros JavaScript · mobile",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-layout-desktop",
+    "name": "Rolagem horizontal · desktop",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-layout-tablet",
+    "name": "Rolagem horizontal · tablet",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  },
+  {
+    "key": "frontend-layout-mobile",
+    "name": "Rolagem horizontal · mobile",
+    "types": [
+      "Smoke",
+      "Regression",
+      "EndToEnd"
+    ],
+    "version": 1
+  }
 ]

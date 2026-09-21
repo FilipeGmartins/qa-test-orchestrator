@@ -49,3 +49,38 @@ test('real Chromium: passing cases, retries, blocked origins and timeout', { tim
     assert.notEqual(timeout.code, 0); assert.notEqual(timeout.events.at(-1)?.status, 'passed');
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
+
+
+test('frontend URL: screenshots in three viewports, resource/JS/layout failures and network fences', { timeout: 120000 }, async () => {
+  let writes = 0; let outsideRequests = 0;
+  const outside = http.createServer((_req, res) => { outsideRequests++; res.end('denied'); });
+  await new Promise(resolve => outside.listen(0, '127.0.0.1', resolve));
+  const outsideOrigin = `http://127.0.0.1:${outside.address().port}`;
+  const server = http.createServer((req, res) => {
+    if (req.method === 'POST') { writes++; res.end('write'); return; }
+    if (req.url === '/missing') { res.writeHead(404); res.end('missing'); return; }
+    if (req.url === '/redirect') { res.writeHead(302, { Location: outsideOrigin }); res.end(); return; }
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    const body = req.url === '/bad' ? '<img src="/missing"><div style="width:2200px">overflow</div><script>console.error("controlled console failure"); setTimeout(() => { throw new Error("controlled JS failure"); }, 100);</script>' : req.url === '/write' ? '<script>fetch("/write", {method:"POST"}).catch(() => {});</script>' : '<h1>Responsive page</h1>';
+    res.end(`<html><head><title>Frontend</title><meta name="viewport" content="width=device-width"></head><body style="margin:0">${body}</body></html>`);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const config = { baseUrl: origin, allowedOrigins: [origin], cases: ['load','console','layout'].flatMap(check => ['desktop','tablet','mobile'].map(device => ({ stableKey: `frontend-${check}-${device}` }))),
+    options: { testType: 'Smoke', browser: 'Chromium', mode: 'Headless', workers: 2, retries: 0, timeoutSeconds: 60, screenshot: 'Always', video: 'Never', trace: 'OnFailure' } };
+  try {
+    const passed = await execute(config); assert.equal(passed.code, 0, passed.error); assert.equal(passed.events.at(-1).passed, 9);
+    for (const attempt of passed.events.filter(x => x.kind === 'attempt')) {
+      const shot = attempt.artifacts.find(x => x.kind === 'screenshot'); assert.ok(shot);
+      const bytes = await fs.readFile(path.join(passed.directory, shot.relativePath));
+      const dimensions = { desktop: [1440,900], tablet: [768,1024], mobile: [390,844] }[attempt.key.split('-').at(-1)];
+      assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], dimensions);
+    }
+    const failed = await execute({ ...config, baseUrl: origin + '/bad', cases: ['load','console','layout'].map(check => ({ stableKey: `frontend-${check}-mobile` })) });
+    assert.equal(failed.code, 1); assert.equal(failed.events.at(-1).failed, 3);
+    const denied = await execute({ ...config, baseUrl: origin + '/redirect', cases: [{ stableKey: 'frontend-load-desktop' }] });
+    assert.equal(denied.code, 1); assert.equal(outsideRequests, 0);
+    const write = await execute({ ...config, baseUrl: origin + '/write', cases: [{ stableKey: 'frontend-load-desktop' }] });
+    assert.equal(write.code, 1); assert.equal(writes, 0);
+  } finally { server.closeAllConnections(); outside.closeAllConnections(); await Promise.all([new Promise(resolve => server.close(resolve)), new Promise(resolve => outside.close(resolve))]); }
+});

@@ -1,4 +1,4 @@
-# Runner Playwright — v0.7.0
+# Runner Playwright — v0.11.0
 
 ## Resultados e retenção
 Consulte Resultados e evidências nos detalhes da execução, ou Histórico de resultados no catálogo de casos. Cada tentativa tem status/duração/browser, erro/stack/logs do teste e downloads. Capturas são copiadas para nomes UUID e baixadas pelo endpoint vinculado à execução; a pasta nunca é publicada estaticamente. Trace é um ZIP para inspeção no Playwright Trace Viewer local; vídeo WebM e screenshot PNG podem ser abertos após download.
@@ -37,7 +37,7 @@ Cancelamento Pending/Queued é imediato. Running persiste intenção; o adapter 
 Evidências obedecem Always/OnFailure/Never e são gravadas sob diretório UUID da execução. O resumo e tentativas aparecem no detalhe; navegação/download autenticado de screenshots, vídeos, traces e retenção entram na próxima etapa. Nada é servido estaticamente e stderr bruto não é persistido.
 
 ## Restrições de rede e ambiente
-Somente origens HTTP(S) exatas aprovadas; credenciais/query/fragmentos proibidos. Requisições do browser verificam origens, redirects são buscados sem seguimento automático, service workers e WebSockets são bloqueados. GET via API não segue redirects. Estes controles não são sandbox de sistema operacional nem proteção geral contra DNS rebinding/WebRTC; execute apenas contra alvos confiáveis e mantenha a aplicação local. Isolamento de processo, egress em rede e limites de recursos do container serão validados com a infraestrutura final. Production continua bloqueado e autenticação é etapa separada.
+Somente origens HTTP(S) exatas aprovadas; credenciais/query/fragmentos proibidos. Requisições do browser verificam origens, respostas de redirecionamento HTTP são bloqueadas antes de entregar ao browser, service workers e WebSockets são bloqueados. GET via API não segue redirects. Estes controles não são sandbox de sistema operacional nem proteção geral contra DNS rebinding/WebRTC; execute apenas contra alvos confiáveis e mantenha a aplicação local. Isolamento de processo, egress em rede e limites de recursos do container serão validados com a infraestrutura final. Production continua bloqueado; a API exige autenticação desde v0.10.0.
 
 ## Verificação real sem Docker
 - `node --test automation/runner.test.mjs`: servidor HTTP efêmero + Chromium, sucesso, falha/retry, origem negada, chave inválida e timeout.
@@ -45,3 +45,6 @@ Somente origens HTTP(S) exatas aprovadas; credenciais/query/fragmentos proibidos
 - Nesta máquina, configure `PLAYWRIGHT_BROWSERS_PATH` com o caminho absoluto `.cache/ms-playwright` na raiz.
 
 Referências: [rede e service workers](https://playwright.dev/docs/network), [APIRequestContext e maxRedirects](https://playwright.dev/docs/api/class-apirequestcontext).
+
+## Frontend por URL
+Catálogo ampliado com nove casos frontend-{load|console|layout}-{desktop|tablet|mobile}. Configuração, observação, capturas e restrições documentadas em [FRONTEND-URL.md](../docs/FRONTEND-URL.md). Requisições diferentes de GET/HEAD são bloqueadas nesses casos. Teste Node cobre nove capturas e dimensões PNG, três classes de falha, redirect sem acesso ao destino e POST sem atingir o servidor.

@@ -1,5 +1,5 @@
-# Estado atual — v0.10.0
-Autenticação implementada com perfis globais, usuários, sessões revogáveis e autoria. Próximas etapas: CI/CD (#9), depois integração Docker/PostgreSQL e aceite completo (#10). Detalhes de acesso em AUTHENTICATION.md. Shopify permanece fora do escopo.
+# Estado atual — v0.11.0
+Testes de frontend por URL implementados: carregamento, console e rolagem horizontal com capturas em três tamanhos. Autenticação implementada com perfis globais, usuários, sessões revogáveis e autoria. Próximas etapas: CI/CD (#9), depois integração Docker/PostgreSQL e aceite completo (#10). Detalhes de acesso em AUTHENTICATION.md. Shopify permanece fora do escopo.
 
 # QA Test Orchestrator — Produto
 

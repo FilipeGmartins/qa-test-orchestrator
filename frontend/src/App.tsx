@@ -9,6 +9,7 @@ import { CaseCatalog, EnvironmentCatalog } from './features/catalog/Catalog';
 import { RunHistory, RunDetails, RunWizard } from './features/runs/Runs';
 import { CaseResults } from './features/runs/Results';
 import { PresetProjects, PresetList, PresetDetails } from './features/presets/Presets';
+import { PageTests } from './features/page-tests/PageTests';
 import { AccountPage, UsersPage, useUser, roleNames } from './features/auth/Auth';
 import { lazy, Suspense } from 'react';
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -23,6 +24,7 @@ const roadmap = [
   ['07', 'Dashboard', 'Métricas reais e evolução', 'Disponível'],
   ['08', 'Presets', 'Configurações reutilizáveis e revisões', 'Disponível'],
   ['09', 'Autenticação', 'Usuários, sessões e permissões', 'Disponível'],
+  ['10', 'Frontend por URL', 'Carregamento, console e tamanhos de tela', 'Disponível'],
 ];
 
 export function App() {
@@ -38,19 +40,21 @@ export function App() {
         <NavLink to="/projects"><span aria-hidden="true">▱</span> Projetos</NavLink>
         <NavLink to="/test-suites"><span aria-hidden="true">≡</span> Suítes de teste</NavLink>
         <NavLink to="/test-runs"><span aria-hidden="true">▷</span> Execuções</NavLink>
+        <NavLink to="/page-tests">Testar página por URL</NavLink>
         <NavLink to="/presets"><span aria-hidden="true">◇</span> Presets</NavLink>
         <NavLink to="/account">Minha conta</NavLink>
         {user?.role === 'Admin' && <NavLink to="/users">Usuários</NavLink>}
         <NavLink to="/settings"><span aria-hidden="true">◎</span> Status do sistema</NavLink>
       </nav>
       <div className="future-nav"><p className="nav-label">PRÓXIMAS ENTREGAS</p><span>CI/CD</span><span>Docker/PostgreSQL</span></div>
-      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Autenticação · v0.10.0</small></div>
+      <div className="sidebar-footer"><span className="environment-dot" /> Ambiente local<small>Frontend por URL · v0.11.0</small></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 09</span></header>
+      <header className="topbar"><span>Workspace <span className="separator">/</span> QA Test Orchestrator</span><span className="phase-badge">FASE 10</span></header>
       <main id="main" tabIndex={-1}>
         {user && <p className="session-label">{user.name} · {roleNames[user.role]}{user.role === 'Reader' && ' — acesso somente para consulta'}</p>}
         <Routes>
+          <Route path="/page-tests" element={<PageTests />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/" element={<Overview />} />

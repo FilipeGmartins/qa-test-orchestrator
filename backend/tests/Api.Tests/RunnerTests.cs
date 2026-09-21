@@ -121,12 +121,14 @@ public sealed class RunnerTests
         server.Start();
         var origin = $"http://127.0.0.1:{((System.Net.IPEndPoint)server.LocalEndpoint).Port}";
         using var serverStop = new CancellationTokenSource();
+        var requestedPaths = new System.Collections.Concurrent.ConcurrentBag<string>();
         var serving = Task.Run(async () => {
             while (!serverStop.IsCancellationRequested)
             {
                 using var socket = await server.AcceptTcpClientAsync(serverStop.Token);
                 var stream = socket.GetStream();
                 using var reader = new StreamReader(stream, leaveOpen: true);
+                requestedPaths.Add(await reader.ReadLineAsync(serverStop.Token) ?? "");
                 while (await reader.ReadLineAsync(serverStop.Token) is { Length: > 0 }) { }
                 var body = "<html><title>Real integration</title></html>";
                 var reply = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n{body}");
@@ -158,6 +160,23 @@ public sealed class RunnerTests
                 var download = await client.GetAsync($"/api/test-runs/{run.Id}/artifacts/{artifact.Id}");
                 download.EnsureSuccessStatusCode();
                 Assert.Equal(artifact.Size, (await download.Content.ReadAsByteArrayAsync()).LongLength);
+            }
+            var pageResponse = await client.PostAsJsonAsync($"/api/projects/{run.ProjectId}/page-tests", new { environmentId = run.EnvironmentId,
+                url = origin + "/frontend-fixture", checks = new[] { "load", "console", "layout" }, devices = new[] { "mobile" } });
+            pageResponse.EnsureSuccessStatusCode();
+            var pageRun = (await pageResponse.Content.ReadFromJsonAsync<RunDto>(Json))!;
+            (await client.PostAsJsonAsync($"/api/test-runs/{pageRun.Id}/enqueue", new { pageRun.Version })).EnsureSuccessStatusCode();
+            Assert.True(await host.Services.GetRequiredService<RunWorker>().ProcessNextAsync(default));
+            var pageResult = (await client.GetFromJsonAsync<RunDto>($"/api/test-runs/{pageRun.Id}", Json))!;
+            Assert.True(pageResult.Status == RunStatus.Passed, pageResult.RunnerError);
+            Assert.Contains(requestedPaths, x => x.StartsWith("GET /frontend-fixture "));
+            var pageAttempts = (await client.GetFromJsonAsync<ResultPage>($"/api/test-runs/{pageRun.Id}/results", Json))!;
+            Assert.Equal(3, pageAttempts.Items.Count);
+            foreach (var pageAttempt in pageAttempts.Items) {
+                var screenshot = Assert.Single(pageAttempt.Artifacts, a => a.Kind == "screenshot");
+                var bytes = await client.GetByteArrayAsync($"/api/test-runs/{pageRun.Id}/artifacts/{screenshot.Id}");
+                Assert.Equal(390, System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(bytes.AsSpan(16, 4)));
+                Assert.Equal(844, System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(bytes.AsSpan(20, 4)));
             }
             using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => host.Services.GetRequiredService<ITestRunner>().ExecuteAsync(Guid.NewGuid(), result.Configuration, _ => Task.CompletedTask, cancellation.Token));

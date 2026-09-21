@@ -22,7 +22,7 @@ public sealed class PlaywrightTestRunner(RunnerSettings settings, IRunnerPolicy 
         {
             var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
             var stderr = DrainErrors(process.StandardError, ct);
-            await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { snapshot.BaseUrl, snapshot.Cases, snapshot.Options, settings.AllowedOrigins }, jsonOptions).AsMemory(), ct);
+            await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { BaseUrl = snapshot.PageUrl ?? snapshot.BaseUrl, snapshot.Cases, snapshot.Options, settings.AllowedOrigins }, jsonOptions).AsMemory(), ct);
             process.StandardInput.Close();
             string? summary = null;
             while (await process.StandardOutput.ReadLineAsync(ct) is { } line)

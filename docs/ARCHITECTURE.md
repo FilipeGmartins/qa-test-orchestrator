@@ -1,5 +1,11 @@
 # Arquitetura
 
+## Frontend por URL — 0.11.0
+PageTestService usa o DbContext scoped e TestRunService.CreatePreparedAsync para salvar catálogo dedicado e Pending atomicamente, tocando a versão do projeto para detectar alterações concorrentes. TestSuite.IsPageAudit + índice único parcial identificam uma suíte por projeto, sem depender de nome editável. Casos fixos frontend-{load|console|layout}-{desktop|tablet|mobile}. Snapshot tem pageUrl opcional; versões anteriores continuam desserializando com null. RunnerPolicy valida origem do ambiente e do alvo; adapter passa pageUrl quando presente.
+
+Specs observam DOMContentLoaded + 1,5 s, com coleta limitada de eventos, assertions de recursos/JS/largura e capturas do Playwright. Backend e reporter mantêm o contrato por caso/browser existente. Redirects HTTP são bloqueados antes do fulfill; POST e demais métodos de escrita são bloqueados nos casos frontend. Restrições e comportamento em FRONTEND-URL.md.
+
+
 ## Autenticação — implementação 0.10.0
 Cookie authentication/antiforgery do ASP.NET Core no módulo Api/Authentication.cs; AccountService concentra operações de conta e transações EF, PasswordHasher faz hash/salt versionado. Account/LoginSession/AccountRegistry ficam no domínio e têm mapeamento/migração em Infrastructure. ICurrentActor em Application permite que serviços de execução registrem autoria sem depender de HttpContext; HttpActor resolve a sessão no host HTTP. Worker não recebe identidade inventada.
 
