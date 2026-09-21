@@ -1,5 +1,9 @@
 # Modelo de dados
 
+## Autenticação — 0.10.0
+Migração AddAuthentication: Accounts (login normalizado único, hash, perfil, ativação, versão, bloqueio), LoginSessions (FK da conta, versão da conta e expiração) e AccountRegistries (linha única semeada pela migração para controle de concorrência). Não semeia credenciais. TestRuns recebe seis colunas nullable de autoria; históricos preservados. Readiness verifica as novas tabelas e migrações. PostgreSQL/Compose continuam para #10.
+
+
 ## Presets — migração AddRunPresets (0.9.0)
 RunPresets: Id UUID, ProjectId FK Restrict, Name(120), Description(2000), Revision int, Version UUID concorrente, Archived bool e timestamps UTC. Índice ProjectId/Archived/UpdatedAt/Id. PresetRevisions: PK PresetId/Revision, Name/Description, RequestJson/SnapshotJson text e CreatedAt. Revisões são apenas inseridas pelo serviço, nunca reescritas.
 

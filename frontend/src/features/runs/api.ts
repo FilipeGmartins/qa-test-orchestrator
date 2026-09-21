@@ -14,7 +14,7 @@ export interface RunConfiguration {
   cases: { id: string; stableKey: string; name: string; catalogVersion: number; tags: string[] }[];
   tags: string[]; options: RunOptions;
 }
-export interface TestRun { presetId?: string | null; presetRevision?: number | null; id: string; projectId: string; status: RunStatus; version: string; createdAt: string; startedAt: string | null; finishedAt: string | null; configuration: RunConfiguration; runnerAvailable: boolean; cancellationRequested?: boolean; runnerError?: string; progress?: { kind: string; key?: string; browser?: string; attempt?: number; status?: string }[]; result?: { passed: number; failed: number; skipped: number; total: number } }
+export interface TestRun { createdByName?: string | null; enqueuedByName?: string | null; cancelledByName?: string | null; presetId?: string | null; presetRevision?: number | null; id: string; projectId: string; status: RunStatus; version: string; createdAt: string; startedAt: string | null; finishedAt: string | null; configuration: RunConfiguration; runnerAvailable: boolean; cancellationRequested?: boolean; runnerError?: string; progress?: { kind: string; key?: string; browser?: string; attempt?: number; status?: string }[]; result?: { passed: number; failed: number; skipped: number; total: number } }
 export const runApi = {
   capabilities: (signal?: AbortSignal) => apiRequest<{ enabled: boolean; catalog: { key: string; name: string; types: string[] }[] }>(`/runner`, { signal }),
   enqueue: (run: TestRun) => apiRequest<TestRun>(`/test-runs/${run.id}/enqueue`, { method: 'POST', body: JSON.stringify({ version: run.version }) }),

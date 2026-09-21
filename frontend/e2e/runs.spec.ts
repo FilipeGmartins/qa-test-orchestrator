@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('configura em cinco etapas, consulta snapshot, cancela e filtra histórico', async ({ page }) => {
   const project = { id: 'p1', name: 'Portal', archivedAt: null };

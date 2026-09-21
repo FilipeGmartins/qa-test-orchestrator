@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -180,6 +181,7 @@ internal sealed class ProjectTestHost(Action<IServiceCollection>? configure = nu
         builder.UseEnvironment("Development");
         builder.ConfigureServices(services =>
         {
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.RemoveAll<OrchestratorDbContext>();
             services.RemoveAll<DbContextOptions<OrchestratorDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<OrchestratorDbContext>>();
@@ -193,8 +195,17 @@ internal sealed class ProjectTestHost(Action<IServiceCollection>? configure = nu
         var host = base.CreateHost(builder);
         using var scope = host.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<OrchestratorDbContext>().Database.EnsureCreated();
+        scope.ServiceProvider.GetRequiredService<QaTestOrchestrator.Api.AccountService>().Bootstrap("test.admin", "Test Admin", AuthTestTools.Password, default).GetAwaiter().GetResult();
         return host;
     }
+
+    public new HttpClient CreateClient()
+    {
+        var client = base.CreateClient();
+        AuthTestTools.Login(client, "test.admin").GetAwaiter().GetResult();
+        return client;
+    }
+    public HttpClient AnonymousClient() => base.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
     public override async ValueTask DisposeAsync()
     {

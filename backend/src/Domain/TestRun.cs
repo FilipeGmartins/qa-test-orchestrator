@@ -26,6 +26,15 @@ public sealed class TestRun
     public Guid ProjectId { get; private set; }
     public Guid TestSuiteId { get; private set; }
     public Guid EnvironmentId { get; private set; }
+    public Guid? CreatedById { get; private set; }
+    public string? CreatedByName { get; private set; }
+    public Guid? EnqueuedById { get; private set; }
+    public string? EnqueuedByName { get; private set; }
+    public Guid? CancelledById { get; private set; }
+    public string? CancelledByName { get; private set; }
+    public void RecordCreator(Guid? id, string? name) { CreatedById = id; CreatedByName = name; }
+    public void RecordEnqueuer(Guid? id, string? name) { EnqueuedById = id; EnqueuedByName = name; }
+    public void RecordCanceller(Guid? id, string? name) { CancelledById = id; CancelledByName = name; }
     public Guid? PresetId { get; private set; }
     public int? PresetRevision { get; private set; }
     public string ConfigurationSnapshot { get; private set; } = "";

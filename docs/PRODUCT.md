@@ -1,3 +1,6 @@
+# Estado atual — v0.10.0
+Autenticação implementada com perfis globais, usuários, sessões revogáveis e autoria. Próximas etapas: CI/CD (#9), depois integração Docker/PostgreSQL e aceite completo (#10). Detalhes de acesso em AUTHENTICATION.md. Shopify permanece fora do escopo.
+
 # QA Test Orchestrator — Produto
 
 ## Visão e personas

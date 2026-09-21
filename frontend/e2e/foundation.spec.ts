@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('consulta diagnóstico e navega para status do sistema', async ({ page }) => {
   await page.route('**/api/system', route => route.fulfill({ json: {

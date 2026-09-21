@@ -11,11 +11,11 @@ public sealed record RunCaseSnapshot(Guid Id, string StableKey, string Name, int
 public sealed record RunSnapshot(int SchemaVersion, string ProjectName, string SuiteName, Guid SuiteVersion,
     string EnvironmentName, string BaseUrl, Guid EnvironmentVersion, RunCaseSnapshot[] Cases, string[] Tags, RunOptions Options);
 public sealed record RunDto(Guid Id, Guid ProjectId, Guid TestSuiteId, Guid EnvironmentId, RunStatus Status,
-    Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false, bool CancellationRequested = false, JsonElement? Result = null, JsonElement? Progress = null, string? RunnerError = null, Guid? PresetId = null, int? PresetRevision = null)
+    Guid Version, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt, RunSnapshot Configuration, bool RunnerAvailable = false, bool CancellationRequested = false, JsonElement? Result = null, JsonElement? Progress = null, string? RunnerError = null, Guid? PresetId = null, int? PresetRevision = null, Guid? CreatedById = null, string? CreatedByName = null, Guid? EnqueuedById = null, string? EnqueuedByName = null, Guid? CancelledById = null, string? CancelledByName = null)
 {
     public static RunDto From(TestRun run) => new(run.Id, run.ProjectId, run.TestSuiteId, run.EnvironmentId, run.Status,
         run.Version, run.CreatedAt, run.StartedAt, run.FinishedAt, JsonSerializer.Deserialize<RunSnapshot>(run.ConfigurationSnapshot)!, false, run.CancellationRequested,
-        run.ResultJson is null ? null : JsonSerializer.Deserialize<JsonElement>(run.ResultJson), JsonSerializer.Deserialize<JsonElement>(run.ProgressJson), run.RunnerError, run.PresetId, run.PresetRevision);
+        run.ResultJson is null ? null : JsonSerializer.Deserialize<JsonElement>(run.ResultJson), JsonSerializer.Deserialize<JsonElement>(run.ProgressJson), run.RunnerError, run.PresetId, run.PresetRevision, run.CreatedById, run.CreatedByName, run.EnqueuedById, run.EnqueuedByName, run.CancelledById, run.CancelledByName);
 }
 public sealed record RunPage(IReadOnlyList<RunDto> Items, int Total, int Page, int PageSize);
 public interface ITestRunStore
@@ -26,7 +26,7 @@ public interface ITestRunStore
     Task AddAsync(TestRun run, CancellationToken ct);
     Task SaveAsync(CancellationToken ct);
 }
-public sealed class TestRunService(ITestRunStore store, IProjectStore projects, ITestSuiteStore suites, ICatalogStore catalog, TimeProvider clock, IRunnerPolicy policy)
+public sealed class TestRunService(ITestRunStore store, IProjectStore projects, ITestSuiteStore suites, ICatalogStore catalog, TimeProvider clock, IRunnerPolicy policy, ICurrentActor actor)
 {
     public async Task<RunDto> CreateAsync(Guid projectId, RunRequest request, CancellationToken ct)
     {
@@ -65,6 +65,7 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
         // All catalog writes also update this token, detecting archive/deactivation races.
         project.RegisterCatalogChange(now);
         var run = TestRun.Create(projectId, request.TestSuiteId, request.EnvironmentId, JsonSerializer.Serialize(snapshot), now, presetId, presetRevision);
+        run.RecordCreator(actor.Id, actor.Name);
         await store.AddAsync(run, ct); await store.SaveAsync(ct);
         return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
     }
@@ -75,7 +76,7 @@ public sealed class TestRunService(ITestRunStore store, IProjectStore projects, 
         if (request.Version == Guid.Empty) throw new ValidationException("Informe a versão atual.", "version");
         if (run.Status == RunStatus.Cancelled) return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
         if (run.Version != request.Version) throw new RunConflictException();
-        run.RequestCancellation(clock.GetUtcNow().UtcDateTime); await store.SaveAsync(ct);
+        run.RequestCancellation(clock.GetUtcNow().UtcDateTime); run.RecordCanceller(actor.Id, actor.Name); await store.SaveAsync(ct);
         return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
     }
     public async Task<RunPage> ListAsync(Guid? projectId, string? status, int page, int pageSize, CancellationToken ct)

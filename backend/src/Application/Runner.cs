@@ -12,7 +12,7 @@ public interface ITestRunner
 {
     Task<string> ExecuteAsync(Guid runId, RunSnapshot snapshot, Func<string, Task> progress, CancellationToken ct);
 }
-public sealed class RunQueueService(ITestRunStore store, IProjectStore projects, ITestSuiteStore suites, ICatalogStore catalog, IRunnerPolicy policy, TimeProvider clock)
+public sealed class RunQueueService(ITestRunStore store, IProjectStore projects, ITestSuiteStore suites, ICatalogStore catalog, IRunnerPolicy policy, TimeProvider clock, ICurrentActor actor)
 {
     public async Task<RunDto> EnqueueAsync(Guid id, RunCancelRequest request, CancellationToken ct)
     {
@@ -33,7 +33,7 @@ public sealed class RunQueueService(ITestRunStore store, IProjectStore projects,
             || cases.Any(x => x.TestSuiteId != suite.Id || x.Status != TestSuiteStatus.Active || !snapshot.Cases.Any(y => y.Id == x.Id && y.CatalogVersion == x.CatalogVersion)))
             throw new ValidationException("O catálogo mudou. Crie uma nova configuração antes de executar.", "configuration");
         project.RegisterCatalogChange(clock.GetUtcNow().UtcDateTime);
-        run.Queue(); await store.SaveAsync(ct);
+        run.Queue(); run.RecordEnqueuer(actor.Id, actor.Name); await store.SaveAsync(ct);
         return RunDto.From(run) with { RunnerAvailable = policy.Enabled };
     }
 }

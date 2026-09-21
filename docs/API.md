@@ -1,5 +1,20 @@
 # API
 
+## Autenticação — 0.10.0
+Todas as rotas de dados exigem sessão; apenas /api/auth/login, /api/auth/csrf e health/live/ready são anônimas. Toda escrita exige X-CSRF-Token + cookie antiforgery. 401 = sessão ausente/expirada, 403 = perfil insuficiente, 400 CSRF_INVALID = token/cookie inválido, 429 = limite de tentativas.
+
+- GET /api/auth/csrf → {token}; token para a identidade atual.
+- POST /api/auth/login {login,password} → cookie de sessão e AccountDto.
+- GET /api/auth/me → AccountDto autenticado.
+- POST /api/auth/logout {} → revoga sessão atual.
+- POST /api/auth/password {currentPassword,newPassword} → troca senha e encerra todas as sessões.
+- GET /api/users?page=1 → página de 20 usuários, somente Admin.
+- POST /api/users {login,name,role,password,active} → cria usuário, somente Admin.
+- PUT /api/users/{id} {login,name,role,active,version,password?} → edita/redefine senha; versão obrigatória e sessões revogadas; somente Admin.
+
+AccountDto: id, login, name, role (Admin/Operator/Reader), active, version. Nenhum hash/senha é devolvido. RunDto inclui createdById/createdByName, enqueuedById/enqueuedByName e cancelledById/cancelledByName, nullable para históricos anteriores. API determina autoria; campos enviados pelo cliente não a substituem. Política detalhada em AUTHENTICATION.md.
+
+
 ## Presets — v0.9.0
 - `GET /api/projects/{projectId}/presets`: search até 120 caracteres, status active/archived/all (padrão active), page 1–100000 e pageSize 1–100 (padrão 12).
 - `POST /api/projects/{projectId}/presets` e `PUT /api/projects/{projectId}/presets/{id}`: `{name,description,configuration,version}`. Configuration usa o contrato RunRequest; version obrigatório na edição. Criação/edição valida catálogo atual e preserva revisão, sem criar execução.

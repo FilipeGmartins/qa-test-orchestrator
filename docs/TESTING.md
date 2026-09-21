@@ -1,5 +1,14 @@
 # Testes e validação
 
+## Autenticação — 0.10.0
+85 testes backend, 48 frontend e 12 E2E aprovados (145 verificações distintas). Builds aprovados e modelo sem migração pendente. PostgreSQL continua ignorado sem QA_TEST_DATABASE; aceite de infraestrutura permanece para #10.
+
+HTTP/SQLite usa cookie real e antiforgery: acesso anônimo, papéis Reader/Operator/Admin, escrita bloqueada, autoria derivada da sessão, logout e replay de cookie, token de outro navegador, senha atual obrigatória, revogação de todas as sessões, expiração, desativação, versões antigas, último administrador, concorrência do registro administrativo, bloqueio após falhas, limite 429 e bootstrap único. Runner Chromium real passa autenticado e verifica autoria de enqueue. Hosts de teste usam proteção de dados efêmera; produção conserva o provedor normal do ASP.NET Core. Teste PostgreSQL foi adaptado para bootstrap/login após migração, mas não foi executado nesta etapa.
+
+Vitest: três testes novos protegem páginas, limpeza do cache na entrada/revogação e erro de conexão. Os 45 existentes passaram na regressão; um mock de sessão dos novos testes foi corrigido e os três foram repetidos com sucesso. Navegador: os dez fluxos existentes passaram com sessão controlada explícita; dois novos fluxos de login/leitor/logout e administração de usuário passaram após corrigir a interceptação de rotas do teste. E2E de interface usa API controlada; não confundir com integração PostgreSQL real.
+
+Comandos: `npm test -- --pool=threads --maxWorkers=1 --testTimeout=30000`; `npm run test:e2e -- --workers=1`; backend com QA_RUNNER_INTEGRATION=1. Bootstrap interativo somente após migração e com banco configurado, conforme AUTHENTICATION.md.
+
 ## Presets — 0.9.0
 76 testes backend, 45 frontend e 10 E2E aprovados (131 verificações distintas). Backend inclui runner real Chromium com PNG/WebM/ZIP; PostgreSQL permanece ignorado sem QA_TEST_DATABASE, até a etapa #10. Cobertura nova: revisões preservadas, origem da execução, arquivamento, concorrência, revalidação de ambiente/casos, isolamento por projeto, configuração inválida e repetição com versão antiga sem duplicar execuções.
 

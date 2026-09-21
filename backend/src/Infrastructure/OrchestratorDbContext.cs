@@ -10,6 +10,9 @@ namespace QaTestOrchestrator.Infrastructure;
 public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext> options)
     : DbContext(options)
 {
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<LoginSession> LoginSessions => Set<LoginSession>();
+    public DbSet<AccountRegistry> AccountRegistries => Set<AccountRegistry>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<TestSuite> TestSuites => Set<TestSuite>();
     public DbSet<TestCase> TestCases => Set<TestCase>();
@@ -23,6 +26,24 @@ public sealed class OrchestratorDbContext(DbContextOptions<OrchestratorDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var account = modelBuilder.Entity<Account>();
+        account.HasKey(x => x.Id);
+        account.Property(x => x.Login).HasMaxLength(80);
+        account.HasIndex(x => x.Login).IsUnique();
+        account.Property(x => x.Name).HasMaxLength(120);
+        account.Property(x => x.PasswordHash).HasMaxLength(1000);
+        account.Property(x => x.Role).HasMaxLength(20);
+        account.Property(x => x.Version).IsConcurrencyToken();
+        account.Property(x => x.FailedAttempts).IsConcurrencyToken();
+        var session = modelBuilder.Entity<LoginSession>();
+        session.HasKey(x => x.Id);
+        session.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Cascade);
+        session.HasIndex(x => x.ExpiresAt);
+        var registry = modelBuilder.Entity<AccountRegistry>();
+        registry.HasKey(x => x.Id);
+        registry.Property(x => x.Id).ValueGeneratedNever();
+        registry.Property(x => x.Version).IsConcurrencyToken();
+        registry.HasData(new AccountRegistry { Id = 1, Version = Guid.Empty });
         var preset = modelBuilder.Entity<RunPreset>();
         preset.HasKey(x => x.Id);
         preset.Property(x => x.Name).HasMaxLength(120);
@@ -131,6 +152,9 @@ public sealed class PostgresDatabaseProbe(OrchestratorDbContext database) : IDat
         try
         {
             if ((await database.Database.GetPendingMigrationsAsync(cancellationToken)).Any()) return false;
+            await database.Accounts.AsNoTracking().AnyAsync(cancellationToken);
+            await database.LoginSessions.AsNoTracking().AnyAsync(cancellationToken);
+            await database.AccountRegistries.AsNoTracking().AnyAsync(cancellationToken);
             await database.Projects.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestSuites.AsNoTracking().AnyAsync(cancellationToken);
             await database.TestCases.AsNoTracking().AnyAsync(cancellationToken);

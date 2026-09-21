@@ -66,16 +66,11 @@ public sealed class SystemEndpointsTests
         Assert.Contains("/api/health/ready", document);
     }
 
-    private static WebApplicationFactory<Program> CreateHost(IDatabaseProbe probe) =>
-        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-        {
-            builder.UseEnvironment("Development");
-            builder.ConfigureServices(services =>
-            {
-                services.RemoveAll<IDatabaseProbe>();
-                services.AddSingleton(probe);
-            });
-        });
+    private static ProjectTestHost CreateHost(IDatabaseProbe probe) => new(services =>
+    {
+        services.RemoveAll<IDatabaseProbe>();
+        services.AddSingleton(probe);
+    });
 
     private sealed class Probe(bool available) : IDatabaseProbe
     {

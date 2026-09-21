@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('acompanha resultados, baixa evidência e consulta histórico filtrado do caso', async ({ page }) => {
   const result = { id: 'a1', runId: 'r1', caseId: 'c1', caseName: 'Página inicial', stableKey: 'page-title', browser: 'Chromium', attempt: 0, status: 'failed', durationMs: 1200,

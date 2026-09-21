@@ -154,3 +154,6 @@ h1 { margin: 0 0 8px; font-size: clamp(25px, 2.8vw, 35px); letter-spacing: -1.2p
 .dashboard-row p { white-space: pre-wrap; max-height: 8rem; overflow: auto; }
 .dashboard-chart { min-width: 0; width: 100%; }
 @media (max-width: 850px) { .dashboard-columns { grid-template-columns: 1fr; } }
+
+.login-page { max-width: 520px; margin: 8vh auto; padding: 24px; }
+.session-label { color: #64748b; margin-bottom: 20px; }

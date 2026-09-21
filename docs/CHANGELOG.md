@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-21 — 0.10.0 — Autenticação, autoria e permissões
+- Validação: 85 backend, 48 frontend e 12 E2E aprovados; builds e alinhamento de migração aprovados. PostgreSQL permanece para #10.
+- Login obrigatório, cookie HttpOnly/SameSite, antiforgery em escritas, sessões de 8 horas e revogação no servidor.
+- Administração de usuários e perfis globais Admin/Operator/Reader; troca de senha, bloqueio por tentativas, limitação de requisições e proteção do último administrador.
+- Autoria de criação/enqueue/cancelamento determinada pela sessão; evidências e dados protegidos pela API.
+- Interface de login, Minha conta e Usuários; consultas mantidas para Leitor, ações de escrita restritas.
+- Migração AddAuthentication, SQL e script interativo de bootstrap sem senha padrão. Integração PostgreSQL/infraestrutura continua para #10.
+
+
 ## 2026-09-16 — 0.9.0 — Presets reutilizáveis
 - Validação: 76 testes backend, 45 frontend e 10 E2E aprovados; repetições por timeout local detalhadas em TESTING.md. Modelo alinhado à migração.
 - Configurações por projeto com criação/edição no assistente, pesquisa, paginação, arquivamento lógico e revisões preservadas.

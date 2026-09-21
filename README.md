@@ -2,7 +2,7 @@
 
 Plataforma para configurar e acompanhar testes automatizados sem comandos do framework.
 
-**Entrega atual: Presets reutilizáveis (v0.9.0).** Em `/presets`, escolha o projeto para criar, editar, revisar e reutilizar configurações. Revisões são preservadas; reutilização revalida o catálogo e cria uma execução pendente, sem iniciar testes. Dashboard, projetos, catálogo, runner e evidências já implementados. Próximas etapas: Autenticação, CI/CD e Docker/PostgreSQL (último). Uso local até autenticação. Consulte [produto](docs/PRODUCT.md), [arquitetura](docs/ARCHITECTURE.md), [API](docs/API.md) e [testes](docs/TESTING.md).
+**Entrega atual: Autenticação, autoria e permissões (v0.10.0).** Login obrigatório, perfis Administrador/Operador/Leitor, usuários, troca de senha, revogação de sessões e autoria das execuções. Veja [primeiro acesso e segurança](docs/AUTHENTICATION.md). Presets, dashboard, catálogo, runner e evidências já implementados. Próximas etapas: CI/CD e Docker/PostgreSQL (último); aceite completo de infraestrutura ainda pendente.
 
 ## Executar com Docker
 
@@ -27,6 +27,7 @@ Terminal 1 (PowerShell, raiz do repositório):
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 dotnet run --project backend/src/Api -- --migrate
+./scripts/bootstrap-admin.ps1 # Somente no primeiro acesso ao banco migrado.
 dotnet run --project backend/src/Api --urls http://127.0.0.1:5080
 ```
 

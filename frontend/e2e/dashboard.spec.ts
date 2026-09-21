@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 test('dashboard filtra projeto/período, renderiza gráfico e permite investigar falhas em tela móvel', async ({ page }, testInfo) => {
   const requests: URL[] = [];
   await page.route(/\/api\/(?:dashboard|projects)(?:[/?]|$)/, route => {

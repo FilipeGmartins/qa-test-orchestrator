@@ -1,3 +1,4 @@
+import { useCanWrite } from '../auth/Auth';
 import { useState, type FormEvent } from 'react';
 import { ResultsPanel } from './Results';
 import { presetApi, type Preset } from '../presets/api';
@@ -21,11 +22,12 @@ export function Snapshot({ configuration: c }: { configuration: RunConfiguration
 }
 
 export function RunHistory() {
+  const canWrite = useCanWrite();
   const { projectId = '' } = useParams();
   const [status, setStatus] = useState('all'); const [page, setPage] = useState(1);
   const query = useQuery({ queryKey: ['runs', projectId, status, page], queryFn: ({ signal }) => runApi.list(projectId, status, page, signal) });
   return <>
-    <div className="projects-title"><div className="page-title"><p className="eyebrow">EXECUÇÕES</p><h1>Histórico de execuções</h1><p>Configurações e estados preservados por solicitação.</p></div><Link className="button primary" to={projectId ? `/projects/${projectId}/test-runs/new` : '/projects'}>{projectId ? 'Nova execução' : 'Escolher projeto'}</Link></div>
+    <div className="projects-title"><div className="page-title"><p className="eyebrow">EXECUÇÕES</p><h1>Histórico de execuções</h1><p>Configurações e estados preservados por solicitação.</p></div>{canWrite && <Link className="button primary" to={projectId ? `/projects/${projectId}/test-runs/new` : '/projects'}>{projectId ? 'Nova execução' : 'Escolher projeto'}</Link>}</div>
     <p className="status-message">{runnerNote}</p>
     <div className="field"><label htmlFor="run-filter">Status da execução</label><select id="run-filter" value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="all">Todos</option>{statuses.map(x => <option key={x} value={x}>{statusLabels[x]}</option>)}</select></div>
     {query.isPending ? <p role="status">Carregando execuções…</p> : query.isError ? <><ErrorNotice error={query.error} /><button className="button" onClick={() => void query.refetch()}>Tentar novamente</button></> : <>
@@ -37,6 +39,7 @@ export function RunHistory() {
 }
 
 export function RunDetails() {
+  const canWrite = useCanWrite();
   const { id = '' } = useParams(); const client = useQueryClient(); const [confirm, setConfirm] = useState(false);
   const query = useQuery({ queryKey: ['run', id], queryFn: ({ signal }) => runApi.get(id, signal), refetchInterval: query => ['Queued', 'Running'].includes(query.state.data?.status ?? '') ? 2000 : false });
   const [enqueueConfirm, setEnqueueConfirm] = useState(false);
@@ -47,23 +50,26 @@ export function RunDetails() {
   const run = query.data;
   return <><Link className="back-link" to={`/projects/${run.projectId}/test-runs`}>← Voltar ao histórico</Link><div className="page-title"><h1>Detalhes da execução</h1><p role="status">{statusLabels[run.status]}</p><p>Criada em {new Date(run.createdAt).toLocaleString('pt-BR')}</p>{run.finishedAt && <p>Encerrada em {new Date(run.finishedAt).toLocaleString('pt-BR')}</p>}</div>
     {!run.runnerAvailable && <p className="status-message">Runner desabilitado no servidor. Nenhum teste é executado enquanto ele estiver desabilitado.</p>}
-    {run.status === 'Pending' && run.runnerAvailable && <div className="form-actions">{enqueueConfirm ? <><p>Executar os casos desta configuração no ambiente indicado? O catálogo será revalidado.</p><button className="button primary" disabled={enqueue.isPending} onClick={() => enqueue.mutate()}>Confirmar execução</button><button className="button" onClick={() => setEnqueueConfirm(false)}>Voltar</button></> : <button className="button primary" onClick={() => setEnqueueConfirm(true)}>Executar agora</button>}</div>}
+    {canWrite && run.status === 'Pending' && run.runnerAvailable && <div className="form-actions">{enqueueConfirm ? <><p>Executar os casos desta configuração no ambiente indicado? O catálogo será revalidado.</p><button className="button primary" disabled={enqueue.isPending} onClick={() => enqueue.mutate()}>Confirmar execução</button><button className="button" onClick={() => setEnqueueConfirm(false)}>Voltar</button></> : <button className="button primary" onClick={() => setEnqueueConfirm(true)}>Executar agora</button>}</div>}
     {enqueue.isError && <><ErrorNotice error={enqueue.error} /><button className="button" onClick={() => { enqueue.reset(); void query.refetch(); }}>Recarregar execução</button></>}
     {run.cancellationRequested && run.status === 'Running' && <p role="status">Cancelamento solicitado. Aguardando encerramento do processo.</p>}
     {run.runnerError && <p className="error-message">{run.runnerError}</p>}
     {run.progress && run.progress.length > 0 && <section className="project-form"><h2>Progresso real</h2><p>{run.progress.filter(x => x.kind === 'attempt').length} tentativas concluídas (inclui retries).</p><ul>{run.progress.filter(x => x.kind === 'attempt').slice(-10).map((x, i) => <li key={i}>{x.key} · {x.browser} · tentativa {(x.attempt ?? 0) + 1} · {x.status}</li>)}</ul></section>}
     {run.result && <p className="status-message">{run.result.passed} aprovados · {run.result.failed} falhos · {run.result.skipped} ignorados · {run.result.total} testes</p>}
-    {!run.cancellationRequested && ['Pending', 'Queued', 'Running'].includes(run.status) && <div className="form-actions">{confirm ? <><p>Confirmar o cancelamento desta solicitação?</p><button className="button danger" disabled={mutation.isPending} onClick={() => mutation.mutate()}>Confirmar cancelamento</button><button className="button" disabled={mutation.isPending} onClick={() => setConfirm(false)}>Voltar</button></> : <button className="button" onClick={() => setConfirm(true)}>Cancelar execução</button>}</div>}
+    {canWrite && !run.cancellationRequested && ['Pending', 'Queued', 'Running'].includes(run.status) && <div className="form-actions">{confirm ? <><p>Confirmar o cancelamento desta solicitação?</p><button className="button danger" disabled={mutation.isPending} onClick={() => mutation.mutate()}>Confirmar cancelamento</button><button className="button" disabled={mutation.isPending} onClick={() => setConfirm(false)}>Voltar</button></> : <button className="button" onClick={() => setConfirm(true)}>Cancelar execução</button>}</div>}
     {mutation.isError && <><ErrorNotice error={mutation.error} /><button className="button" onClick={() => { mutation.reset(); setConfirm(false); void query.refetch(); }}>Recarregar estado</button></>}
     {!['Pending', 'Queued'].includes(run.status) && <ResultsPanel id={run.id} active={run.status === 'Running'} />}
+    <p>Criada por: {run.createdByName ?? 'Não registrado (execução anterior)'}{run.enqueuedByName && ` · Enfileirada por: ${run.enqueuedByName}`}{run.cancelledByName && ` · Cancelamento por: ${run.cancelledByName}`}</p>
     {run.presetId && <p>Origem: <Link to={`/presets/${run.presetId}`}>Preset · revisão {run.presetRevision}</Link></p>}
     <Snapshot configuration={run.configuration} />
   </>;
 }
 
 export function RunWizard({ presetMode = false }: { presetMode?: boolean }) {
+  const canWrite = useCanWrite();
   const { presetId, projectId = '' } = useParams();
   const preset = useQuery({ queryKey: ['preset', presetId], queryFn: ({ signal }) => presetApi.get(presetId!, signal), enabled: !!presetId, refetchOnWindowFocus: false });
+  if (!canWrite) return <p role="alert">Seu perfil permite apenas consulta.</p>;
   if (presetId && preset.isPending) return <p>Carregando preset…</p>;
   if (presetId && preset.isError) return <p role="alert">{preset.error.message}<button className="button" onClick={() => void preset.refetch()}>Recarregar preset</button></p>;
   if (preset.data && (preset.data.projectId !== projectId || preset.data.archived)) return <p role="alert">Preset indisponível para edição neste projeto.</p>;

@@ -1,3 +1,4 @@
+import { useCanWrite } from '../auth/Auth';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ function RequestError({ error, retry }: { error: Error; retry?: () => void }) {
 }
 
 export function ProjectList() {
+  const canWrite = useCanWrite();
   const [params, setParams] = useSearchParams();
   const search = params.get('search') ?? '';
   const rawStatus = params.get('status');
@@ -28,7 +30,7 @@ export function ProjectList() {
   }
   function filter(event: FormEvent) { event.preventDefault(); change({ search: draft.trim() }); }
   return <>
-    <div className="projects-title"><Heading title="Projetos" description="Organize os produtos e aplicações que sua equipe vai testar." /><Link className="button primary" to="/projects/new">+ Novo projeto</Link></div>
+    <div className="projects-title"><Heading title="Projetos" description="Organize os produtos e aplicações que sua equipe vai testar." />{canWrite && <Link className="button primary" to="/projects/new">+ Novo projeto</Link>}</div>
     <form className="project-filters" onSubmit={filter}>
       <div className="field search-field"><label htmlFor="project-search">Buscar por nome</label><input id="project-search" type="search" placeholder="Nome do projeto" maxLength={120} value={draft} onChange={event => setDraft(event.target.value)} /></div>
       <div className="field"><label htmlFor="project-status">Status</label><select id="project-status" value={status} onChange={event => change({ status: event.target.value as ProjectStatus })}><option value="active">Ativos</option><option value="archived">Arquivados</option><option value="all">Todos</option></select></div>
@@ -47,6 +49,7 @@ function ProjectBadge({ project }: { project: Project }) {
 }
 
 export function ProjectDetails() {
+  const canWrite = useCanWrite();
   const { id = '' } = useParams();
   const client = useQueryClient();
   const [confirming, setConfirming] = useState(false);
@@ -69,22 +72,25 @@ export function ProjectDetails() {
     <div className="projects-title"><Heading title={project.name} description="Informações e organização do projeto." /><ProjectBadge project={project} /></div>
     {archive.isSuccess && <p className="success-message" role="status">Projeto arquivado. As informações foram preservadas.</p>}
     <section className="project-detail"><h2>Sobre o projeto</h2><p className="description-full">{project.description || 'Nenhuma descrição adicionada.'}</p><dl><div><dt>Criado em</dt><dd>{date(project.createdAt)}</dd></div><div><dt>Atualizado em</dt><dd>{date(project.updatedAt)}</dd></div>{project.archivedAt && <div><dt>Arquivado em</dt><dd>{date(project.archivedAt)}</dd></div>}<div><dt>Identificador</dt><dd className="project-id">{project.id}</dd></div></dl></section>
-    {!project.archivedAt ? <div className="form-actions"><Link className="button primary" to={`/projects/${id}/edit`}>Editar projeto</Link><button className="button danger" onClick={() => { archive.reset(); setConfirming(true); }}>Arquivar projeto</button></div> : <p className="status-message">Este projeto está arquivado e disponível apenas para consulta.</p>}
-    {confirming && !project.archivedAt && <section className="archive-confirmation" aria-labelledby="archive-title"><h2 id="archive-title">Arquivar “{project.name}”?</h2><p>O projeto sairá da lista de ativos. Seus dados serão preservados e poderão ser consultados no filtro Arquivados.</p>{archive.isError && <RequestError error={archive.error} />}{archive.error instanceof ApiError && archive.error.code === 'CONCURRENT_UPDATE' && <button className="button" onClick={() => { void query.refetch(); archive.reset(); setConfirming(false); }}>Recarregar projeto</button>}<div className="form-actions"><button className="button danger" disabled={archive.isPending} onClick={() => archive.mutate(project)}>{archive.isPending ? 'Arquivando…' : 'Confirmar arquivamento'}</button><button className="button" disabled={archive.isPending} onClick={() => setConfirming(false)}>Manter ativo</button></div></section>}
+    {!project.archivedAt && canWrite ? <div className="form-actions"><Link className="button primary" to={`/projects/${id}/edit`}>Editar projeto</Link><button className="button danger" onClick={() => { archive.reset(); setConfirming(true); }}>Arquivar projeto</button></div> : <p className="status-message">{project.archivedAt ? 'Este projeto está arquivado e disponível apenas para consulta.' : 'Seu perfil permite apenas consulta.'}</p>}
+    {confirming && canWrite && !project.archivedAt && <section className="archive-confirmation" aria-labelledby="archive-title"><h2 id="archive-title">Arquivar “{project.name}”?</h2><p>O projeto sairá da lista de ativos. Seus dados serão preservados e poderão ser consultados no filtro Arquivados.</p>{archive.isError && <RequestError error={archive.error} />}{archive.error instanceof ApiError && archive.error.code === 'CONCURRENT_UPDATE' && <button className="button" onClick={() => { void query.refetch(); archive.reset(); setConfirming(false); }}>Recarregar projeto</button>}<div className="form-actions"><button className="button danger" disabled={archive.isPending} onClick={() => archive.mutate(project)}>{archive.isPending ? 'Arquivando…' : 'Confirmar arquivamento'}</button><button className="button" disabled={archive.isPending} onClick={() => setConfirming(false)}>Manter ativo</button></div></section>}
     <p className="roadmap-note">Organize o catálogo em suítes de teste. Casos de teste serão adicionados na próxima entrega.</p>
   </>;
 }
 
 export function ProjectEditor() {
+  const canWrite = useCanWrite();
   const { id } = useParams();
   const query = useQuery({ queryKey: ['project', id], queryFn: ({ signal }) => projectsApi.get(id!, signal), enabled: Boolean(id), refetchOnWindowFocus: false });
   if (id && query.isPending) return <p className="status-message" role="status">Carregando projeto…</p>;
   if (id && query.isError) return <RequestError error={query.error} retry={() => void query.refetch()} />;
   if (query.data?.archivedAt) return <><p className="status-message">Projetos arquivados não podem ser editados.</p><Link className="button" to={`/projects/${id}`}>Voltar ao projeto</Link></>;
+  if (!canWrite) return <p role="alert">Seu perfil permite apenas consulta.</p>;
   return <><Link className="back-link" to={id ? `/projects/${id}` : '/projects'}>← Voltar</Link><Heading title={id ? 'Editar projeto' : 'Novo projeto'} description="Dê um nome claro e descreva o que será testado." /><ProjectForm key={query.data?.version ?? 'new'} project={query.data} onReload={() => void query.refetch()} /></>;
 }
 
 export function ProjectForm({ project, onReload }: { project?: Project; onReload?: () => void }) {
+  const canWrite = useCanWrite();
   const [input, setInput] = useState<ProjectInput>({ name: project?.name ?? '', description: project?.description ?? '' });
   const [errors, setErrors] = useState<Partial<Record<keyof ProjectInput, string>>>({});
   const client = useQueryClient();
@@ -109,10 +115,10 @@ export function ProjectForm({ project, onReload }: { project?: Project; onReload
     mutation.mutate({ name: input.name.trim(), description: input.description.trim() });
   }
   return <form className="project-form" onSubmit={submit} noValidate>
-    <div className="field"><label htmlFor="project-name">Nome do projeto <span aria-hidden="true">*</span></label><input id="project-name" required maxLength={120} autoFocus value={input.name} disabled={mutation.isPending} aria-invalid={Boolean(errors.name)} aria-describedby="name-help name-error" onChange={event => setInput({ ...input, name: event.target.value })} /><p id="name-help" className="field-help">Use até 120 caracteres. Exemplo: Portal do cliente.</p><p id="name-error" className="field-error">{errors.name}</p></div>
-    <div className="field"><label htmlFor="project-description">Descrição <span className="optional">opcional</span></label><textarea id="project-description" maxLength={2000} rows={6} value={input.description} disabled={mutation.isPending} aria-invalid={Boolean(errors.description)} aria-describedby="description-help description-error" onChange={event => setInput({ ...input, description: event.target.value })} /><p id="description-help" className="field-help">Contexto, objetivo e escopo dos testes. {input.description.length}/2000</p><p id="description-error" className="field-error">{errors.description}</p></div>
+    <div className="field"><label htmlFor="project-name">Nome do projeto <span aria-hidden="true">*</span></label><input id="project-name" required maxLength={120} autoFocus value={input.name} disabled={!canWrite || mutation.isPending} aria-invalid={Boolean(errors.name)} aria-describedby="name-help name-error" onChange={event => setInput({ ...input, name: event.target.value })} /><p id="name-help" className="field-help">Use até 120 caracteres. Exemplo: Portal do cliente.</p><p id="name-error" className="field-error">{errors.name}</p></div>
+    <div className="field"><label htmlFor="project-description">Descrição <span className="optional">opcional</span></label><textarea id="project-description" maxLength={2000} rows={6} value={input.description} disabled={!canWrite || mutation.isPending} aria-invalid={Boolean(errors.description)} aria-describedby="description-help description-error" onChange={event => setInput({ ...input, description: event.target.value })} /><p id="description-help" className="field-help">Contexto, objetivo e escopo dos testes. {input.description.length}/2000</p><p id="description-error" className="field-error">{errors.description}</p></div>
     {mutation.isError && <RequestError error={mutation.error} />}
     {mutation.error instanceof ApiError && mutation.error.code === 'CONCURRENT_UPDATE' && <button className="button" type="button" onClick={onReload}>Descartar edição e carregar versão atual</button>}
-    <div className="form-actions"><button type="submit" className="button primary" disabled={mutation.isPending}>{mutation.isPending ? 'Salvando…' : project ? 'Salvar alterações' : 'Criar projeto'}</button><Link className="button" to={project ? `/projects/${project.id}` : '/projects'}>Cancelar</Link></div>
+    <div className="form-actions"><button type="submit" className="button primary" disabled={!canWrite || mutation.isPending}>{mutation.isPending ? 'Salvando…' : project ? 'Salvar alterações' : 'Criar projeto'}</button><Link className="button" to={project ? `/projects/${project.id}` : '/projects'}>Cancelar</Link></div>
   </form>;
 }

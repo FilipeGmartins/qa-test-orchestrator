@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 test('cria e revisa preset, edita, reutiliza sem executar e arquiva preservando revisões', async ({ page }) => {
   const project = { id: 'p1', name: 'Portal', archivedAt: null };
   const suite = { id: 's1', projectId: 'p1', name: 'Smoke', status: 'Active' };

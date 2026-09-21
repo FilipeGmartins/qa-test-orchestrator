@@ -1,3 +1,4 @@
+import { useCanWrite } from '../auth/Auth';
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +11,7 @@ function ErrorNotice({ error }: { error: Error }) {
 }
 
 export function CaseCatalog() {
+  const canWrite = useCanWrite();
   const { suiteId = '' } = useParams();
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState('');
@@ -20,7 +22,7 @@ export function CaseCatalog() {
   const projectId = suite.data?.projectId;
   const project = useQuery({ queryKey: ['project', projectId], queryFn: ({ signal }) => projectsApi.get(projectId!, signal), enabled: !!projectId });
   const query = useQuery({ queryKey: ['cases', suiteId, search, status, page], queryFn: ({ signal }) => catalogApi.cases(suiteId, search, status, page, signal) });
-  const readOnly = !project.data || !!project.data.archivedAt;
+  const readOnly = !canWrite || !project.data || !!project.data.archivedAt;
   return <>
     <Link className="back-link" to={`/test-suites/${suiteId}`}>← Voltar à suíte</Link>
     <div className="projects-title"><div className="page-title"><p className="eyebrow">CATÁLOGO DE TESTES</p><h1>Casos de teste</h1><p>{suite.data?.name}</p></div>
@@ -77,11 +79,12 @@ function CaseForm({ suiteId, projectId, existing, readOnly, close }: { suiteId: 
 }
 
 export function EnvironmentCatalog() {
+  const canWrite = useCanWrite();
   const { projectId = '' } = useParams();
   const project = useQuery({ queryKey: ['project', projectId], queryFn: ({ signal }) => projectsApi.get(projectId, signal) });
   const query = useQuery({ queryKey: ['environments', projectId], queryFn: ({ signal }) => catalogApi.environments(projectId, signal), refetchOnWindowFocus: false });
   const [editing, setEditing] = useState<ProjectEnvironment | 'new' | null>(null);
-  const readOnly = !project.data || !!project.data.archivedAt;
+  const readOnly = !canWrite || !project.data || !!project.data.archivedAt;
   return <><Link className="back-link" to={`/projects/${projectId}`}>← Voltar ao projeto</Link>
     <div className="projects-title"><div className="page-title"><p className="eyebrow">CONFIGURAÇÃO DO PROJETO</p><h1>Ambientes</h1><p>{project.data?.name}</p></div>{!readOnly && query.data && query.data.length < 3 && <button className="button primary" onClick={() => setEditing('new')}>+ Novo ambiente</button>}</div>
     <p className="roadmap-note">Cadastre a URL base de cada ambiente. Production permanece desabilitado até a implementação de permissões.</p>

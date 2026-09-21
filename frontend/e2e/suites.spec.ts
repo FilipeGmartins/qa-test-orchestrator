@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('cria uma suíte, edita status e consulta inativas', async ({ page }) => {
   const project = { id: 'p1', name: 'Portal', description: '', archivedAt: null, version: 'p-v1', createdAt: '2026-09-14T12:00:00Z', updatedAt: '2026-09-14T12:00:00Z' };

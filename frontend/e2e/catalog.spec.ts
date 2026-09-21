@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('cadastra caso, preserva chave ao editar e configura ambiente', async ({ page }) => {
   const project = { id: 'p1', name: 'Portal', description: '', archivedAt: null, version: 'p1', createdAt: '', updatedAt: '' };

@@ -3,10 +3,12 @@ using QaTestOrchestrator.Api;
 using QaTestOrchestrator.Application;
 using QaTestOrchestrator.Infrastructure;
 
+var bootstrapOnly = args.Contains("--bootstrap-admin");
 var workerOnly = args.Contains("--worker");
 var cleanupOnly = args.Contains("--cleanup-artifacts");
 var migrateOnly = args.Contains("--migrate");
-var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate" && arg != "--worker" && arg != "--cleanup-artifacts").ToArray());
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--bootstrap-admin" && arg != "--migrate" && arg != "--worker" && arg != "--cleanup-artifacts").ToArray());
+builder.AddWorkspaceAuthentication();
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
 builder.Services.AddOpenApi();
@@ -55,6 +57,14 @@ if (migrateOnly)
     await scope.ServiceProvider.GetRequiredService<OrchestratorDbContext>().Database.MigrateAsync();
     return;
 }
+if (bootstrapOnly)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<AccountService>().Bootstrap(
+        Environment.GetEnvironmentVariable("QA_ADMIN_LOGIN"), Environment.GetEnvironmentVariable("QA_ADMIN_NAME"), Environment.GetEnvironmentVariable("QA_ADMIN_PASSWORD"), CancellationToken.None);
+    Console.WriteLine("Administrador inicial criado.");
+    return;
+}
 if (workerOnly)
 {
     if (!runnerSettings.Enabled) throw new InvalidOperationException("Runner:Enabled must be true to start the worker.");
@@ -70,6 +80,8 @@ if (cleanupOnly)
     return;
 }
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseWorkspaceAuthentication();
+app.MapAuthenticationEndpoints();
 app.MapProjectEndpoints();
 app.MapTestSuiteEndpoints();
 app.MapCatalogEndpoints();
@@ -77,18 +89,18 @@ app.MapTestRunEndpoints();
 app.MapResultEndpoints();
 app.MapPresetEndpoints();
 app.MapGet("/api/dashboard", (IDashboard service, CancellationToken ct, Guid? projectId = null, DateOnly? from = null, DateOnly? to = null) => service.GetAsync(projectId, from, to, ct)).WithTags("Dashboard");
-if (app.Environment.IsDevelopment()) app.MapOpenApi();
+if (app.Environment.IsDevelopment()) app.MapOpenApi().RequireAuthorization("Admin");
 
 app.MapGet("/api/system", (GetSystemStatus query, CancellationToken ct) => query.ExecuteAsync(ct))
     .WithName("GetSystemStatus").WithSummary("Diagnóstico da API e do banco de dados.")
     .Produces<SystemStatus>().Produces<ApiError>(500);
 app.MapGet("/api/health/live", () => Results.Ok(new HealthStatus("healthy")))
-    .WithName("Liveness").WithSummary("Verifica se o processo da API responde.");
+    .AllowAnonymous().WithName("Liveness").WithSummary("Verifica se o processo da API responde.");
 app.MapGet("/api/health/ready", async (IDatabaseProbe database, CancellationToken ct) =>
     await database.IsAvailableAsync(ct)
         ? Results.Json(new HealthStatus("ready"), statusCode: 200)
         : Results.Json(new HealthStatus("not_ready"), statusCode: 503))
-    .WithName("Readiness").WithSummary("Verifica conectividade com PostgreSQL.")
+    .AllowAnonymous().WithName("Readiness").WithSummary("Verifica conectividade com PostgreSQL.")
     .Produces<HealthStatus>(200).Produces<HealthStatus>(503);
 
 app.Run();

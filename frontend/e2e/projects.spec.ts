@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import type { Project } from '../src/features/projects/api';
 
 test('cria, edita, arquiva e encontra o projeto no histórico de arquivados', async ({ page }) => {

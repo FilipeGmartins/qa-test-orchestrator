@@ -1,5 +1,11 @@
 # Arquitetura
 
+## Autenticação — implementação 0.10.0
+Cookie authentication/antiforgery do ASP.NET Core no módulo Api/Authentication.cs; AccountService concentra operações de conta e transações EF, PasswordHasher faz hash/salt versionado. Account/LoginSession/AccountRegistry ficam no domínio e têm mapeamento/migração em Infrastructure. ICurrentActor em Application permite que serviços de execução registrem autoria sem depender de HttpContext; HttpActor resolve a sessão no host HTTP. Worker não recebe identidade inventada.
+
+Fallback de autorização exige identidade; leitura permite os três perfis e escrita exige Admin/Operator. Auth endpoints usam políticas explícitas e gestão de usuários exige Admin. Validação de cookie consulta sessão/conta no banco a cada requisição. Registry com token concorrente serializa bootstrap/administração e protege último Admin. Contador de falhas concorrente evita perda de tentativas; logout revoga sessão persistida. A UI AuthGate protege montagem de páginas, limpa cache na troca de identidade/saída e oferece conta/administração. Limites operacionais e referências em AUTHENTICATION.md.
+
+
 ## Presets — implementação 0.9.0
 RunPreset contém identidade/projeto, metadados, revisão atual, arquivamento e Version concorrente. PresetRevision preserva nome/descrição, RunRequest JSON e RunSnapshot JSON de cada gravação. PK composta (PresetId, Revision); TestRun aponta para essa revisão via FK composta nullable, preservando origem sem alterar execuções anteriores. IPresets/PresetStore usam o mesmo DbContext scoped que TestRunService.
 

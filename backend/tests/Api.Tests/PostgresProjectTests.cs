@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
@@ -41,7 +42,8 @@ public sealed class PostgresProjectTests
                 builder.UseEnvironment("Development");
                 builder.ConfigureServices(services =>
                 {
-                    services.RemoveAll<OrchestratorDbContext>();
+                    services.AddDataProtection().UseEphemeralDataProtectionProvider();
+            services.RemoveAll<OrchestratorDbContext>();
                     services.RemoveAll<DbContextOptions<OrchestratorDbContext>>();
                     services.RemoveAll<IDbContextOptionsConfiguration<OrchestratorDbContext>>();
                     services.AddDbContext<OrchestratorDbContext>(options => options.UseNpgsql(isolated));
@@ -57,6 +59,9 @@ public sealed class PostgresProjectTests
                 await db.Database.MigrateAsync(); // Reapplying is safe and has no pending changes.
                 Assert.Empty(await db.Database.GetPendingMigrationsAsync());
             }
+            await using (var authScope = host.Services.CreateAsyncScope())
+                await authScope.ServiceProvider.GetRequiredService<QaTestOrchestrator.Api.AccountService>().Bootstrap("test.admin", "Test Admin", AuthTestTools.Password, default);
+            await AuthTestTools.Login(client, "test.admin");
             Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/health/ready")).StatusCode);
             var created = await client.PostAsJsonAsync("/api/projects", new { name = "Portal 100%", description = "PostgreSQL" });
             Assert.Equal(HttpStatusCode.Created, created.StatusCode);

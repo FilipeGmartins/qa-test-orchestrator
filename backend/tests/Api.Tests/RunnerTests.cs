@@ -142,6 +142,8 @@ public sealed class RunnerTests
             Assert.True(await host.Services.GetRequiredService<RunWorker>().ProcessNextAsync(default));
             var result = (await client.GetFromJsonAsync<RunDto>($"/api/test-runs/{run.Id}", Json))!;
             Assert.True(result.Status == RunStatus.Passed, result.RunnerError);
+            Assert.Equal("Test Admin", result.EnqueuedByName);
+            Assert.Equal(run.CreatedById, result.EnqueuedById);
             Assert.Equal(1, result.Result!.Value.GetProperty("passed").GetInt32());
             Assert.Contains(result.Progress!.Value.EnumerateArray(), x => x.GetProperty("kind").GetString() == "attempt");
             var attempts = (await client.GetFromJsonAsync<ResultPage>($"/api/test-runs/{run.Id}/results", Json))!;
