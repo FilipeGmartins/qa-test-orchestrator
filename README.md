@@ -4,6 +4,8 @@ Plataforma para configurar e acompanhar testes automatizados sem comandos do fra
 
 **Entrega atual: Testes de frontend por URL (v0.11.0).** Informe a página, escolha carregamento/console/rolagem horizontal e tamanhos de tela; revise e execute pelo histórico existente, com screenshots. Veja [guia de testes por URL](docs/FRONTEND-URL.md). Login obrigatório e perfis preservados ([primeiro acesso](docs/AUTHENTICATION.md)). Próximas etapas: CI/CD e Docker/PostgreSQL (último); aceite completo de infraestrutura ainda pendente.
 
+**Integração contínua:** workflow GitHub Actions com builds, testes frontend/backend/Chromium e verificação de migrações, sem Docker. Consulte [CI/CD](docs/CI-CD.md) para execução, artefatos e limites. Deploy com ambiente protegido e aceite PostgreSQL continuam pendentes.
+
 ## Executar com Docker
 
 Requisito: Docker Engine/Desktop com Compose v2 e suporte a containers Linux.

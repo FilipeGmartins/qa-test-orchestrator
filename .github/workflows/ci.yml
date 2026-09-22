@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Unit tests
+        run: npm test -- --pool=threads --maxWorkers=1 --testTimeout=30000
+      - name: Build
+        run: npm run build
+      - name: Install Chromium
+        run: npx --no-install playwright install --with-deps chromium
+      - name: UI end-to-end tests (controlled API)
+        run: npm run test:e2e -- --workers=1 --forbid-only --reporter=line,html
+      - name: Upload browser diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-test-results
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Upload frontend build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-${{ github.sha }}
+          path: frontend/dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  backend:
+    name: Backend and runner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      QA_RUNNER_INTEGRATION: '1'
+      # Design-time configuration only; CI never connects to this database.
+      ConnectionStrings__Database: Host=127.0.0.1;Database=qa_ci_design;Username=qa_ci;Timeout=1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          cache-dependency-path: backend/**/packages.lock.json
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install runner dependencies
+        run: npm ci --prefix frontend
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Restore locked .NET dependencies and EF tool
+        run: |
+          dotnet restore backend/QaTestOrchestrator.slnx --locked-mode
+          dotnet tool restore
+      - name: Build
+        run: dotnet build backend/QaTestOrchestrator.slnx --configuration Release --no-restore
+      - name: Backend and real Chromium integration tests (SQLite)
+        run: dotnet test backend/QaTestOrchestrator.slnx --configuration Release --no-build --no-restore --logger trx --results-directory .cache/ci-test-results
+      - name: Node runner integration tests
+        run: node --test automation/runner.test.mjs
+      - name: Check EF model matches migrations
+        run: dotnet ef migrations has-pending-model-changes --project backend/src/Infrastructure --startup-project backend/src/Api --configuration Release --no-build
+      - name: Generate idempotent PostgreSQL migration script (without database)
+        run: dotnet ef migrations script --idempotent --project backend/src/Infrastructure --startup-project backend/src/Api --configuration Release --no-build --output .cache/ci-package/migrations.sql
+      - name: Publish API build
+        run: dotnet publish backend/src/Api --configuration Release --no-build --no-restore --output .cache/ci-package/api
+      - name: Upload backend test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: backend-test-results
+          path: .cache/ci-test-results/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Upload API and migration script
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: backend-${{ github.sha }}
+          path: .cache/ci-package/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error

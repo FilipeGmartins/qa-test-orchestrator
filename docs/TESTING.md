@@ -1,5 +1,9 @@
 # Testes e validação
 
+## CI — 2026-09-22
+
+Workflow `.github/workflows/ci.yml` implementado sem Docker. Comandos validados localmente: restore NuGet com `--locked-mode`, `dotnet tool restore`, build/test/publish Release, verificação de modelo EF e SQL idempotente. Backend: 89 aprovados e 1 PostgreSQL ignorado. Frontend: `npm ci`, 51 Vitest, build e 13 Playwright com `CI=true`, `--workers=1 --forbid-only --reporter=line,html`. Node: 2 integrações reais Chromium aprovadas. Workflow validado com actionlint. Total: 155 testes aprovados. Essa validação Windows não substitui a primeira execução Ubuntu no GitHub; consulte a aba Actions e [CI-CD.md](CI-CD.md).
+
 ## Frontend por URL — 0.11.0
 89 testes backend, 51 frontend, 13 E2E da interface e 2 testes Node aprovados (155 verificações distintas). Backend inclui integração real API → fila SQLite → Chromium para pageUrl diferente da base do ambiente, três resultados persistidos e capturas baixadas com dimensões PNG verificadas. PostgreSQL continua ignorado para a etapa #10.
 

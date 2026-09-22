@@ -1,6 +1,8 @@
 # Estado atual — v0.11.0
 Testes de frontend por URL implementados: carregamento, console e rolagem horizontal com capturas em três tamanhos. Autenticação implementada com perfis globais, usuários, sessões revogáveis e autoria. Próximas etapas: CI/CD (#9), depois integração Docker/PostgreSQL e aceite completo (#10). Detalhes de acesso em AUTHENTICATION.md. Shopify permanece fora do escopo.
 
+CI da etapa #9 implementado em `.github/workflows/ci.yml`, sem containers: builds e testes frontend/backend/runner, modelo EF e SQL de migrações. Builds são disponibilizados como artefatos; deploy, ambiente protegido e validação PostgreSQL ainda pendentes. Consulte CI-CD.md. As seções seguintes registram as entregas históricas.
+
 # QA Test Orchestrator — Produto
 
 ## Visão e personas

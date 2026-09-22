@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-22 — CI sem Docker
+- Workflow GitHub Actions para push em main, pull requests e disparo manual: frontend e backend/runner em Ubuntu, com Node 24, .NET 10 e Chromium.
+- Dependências restauradas por lockfile, testes reais do runner ativados, build Release, verificação de migrações e SQL idempotente sem conectar ao PostgreSQL.
+- Relatórios de testes e builds por commit disponíveis por sete dias; permissões somente leitura e Actions fixadas por SHA.
+- Manifesto local dotnet-ef 10.0.12 e guia CI-CD.md. Deploy e ambiente protegido continuam pendentes de destino e integração final.
+- Validação local: 89 backend, 51 frontend, 13 E2E e 2 Node aprovados; 1 PostgreSQL ignorado. Builds, publicação da API, geração SQL e actionlint aprovados. Validação remota deve ser consultada na aba Actions.
+
 ## 2026-09-21 — 0.11.0 — Testes de frontend por URL
 - Validação: 89 backend, 51 frontend, 13 E2E e 2 testes Node aprovados, builds e migrações alinhados; PostgreSQL continua para #10.
 - Tela com projeto/ambiente/URL, seleção de verificações e tamanhos de tela, revisão e criação Pending sem execução automática.
